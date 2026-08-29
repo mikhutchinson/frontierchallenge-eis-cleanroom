@@ -659,7 +659,7 @@ These assignments follow the impedance.py element definitions and general EIS/ba
 
 """
     for source in EXTERNAL_SOURCES:
-        report += f"- **{source['title']}** — {source['use']}  \n  {source['url']}\n"
+        report += f"- **{source['title']}** — {source['use']}\n  - URL: {source['url']}\n"
     report += "\n## 10. Traceability statement\n\nAll numerical conclusions in this report are generated from the delivered CSV files by `src/run_analysis.py`. External sources support software definitions and cautious physical interpretation only. No reference answer, grader, rubric, expected parameter, or evaluator-side artifact was accessed or used.\n"
     (output_dir / "analysis_report.md").write_text(report, encoding="utf-8")
 
