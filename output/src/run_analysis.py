@@ -64,7 +64,7 @@ EXTERNAL_SOURCES = [
         "id": "impedance_docs_elements",
         "title": "impedance.py 1.7.1 — Circuit Elements",
         "url": "https://impedancepy.readthedocs.io/en/latest/circuit-elements.html",
-        "use": "Definitions and units for R, C, CPE, and semi-infinite Warburg elements.",
+        "use": "Definitions and units for R, C, CPE, and open finite-space Warburg elements.",
     },
     {
         "id": "impedance_docs_fit",
@@ -268,6 +268,9 @@ def base_guess(s: Spectrum, spec: ModelSpec, constants: dict[str, float]) -> tup
     w0 = float(np.median(np.maximum(-z.imag[low_idx], 1e-12)
                          * np.sqrt(2 * np.pi * f[low_idx])))
     w0 = max(w0, 1e-8)
+    # Finite-space Warburg characteristic time and resistance scale, both
+    # derived from the observed low-frequency window.
+    tau0 = 1.0 / (2 * np.pi * max(float(f.min()), 1e-12))
     f_peak = float(f[np.argmax(-z.imag)])
     f_hi = min(float(f.max()) / 2, max(f_peak * 20, f_peak))
     f_lo = max(float(f.min()) * 2, f_peak / 10)
@@ -284,11 +287,12 @@ def base_guess(s: Spectrum, spec: ModelSpec, constants: dict[str, float]) -> tup
         "CPE1_0": q1, "CPE1_1": alpha1,
         "R2": r2, "C2": c2,
         "CPE2_0": q2, "CPE2_1": alpha2,
-        "W1": w0,
+        "Wo1_0": max(w0 * math.sqrt(2 * tau0), r_span * 0.05),
+        "Wo1_1": tau0,
     }
     dummy_count = {
-        "randles_rc": 4, "randles_cpe": 5,
-        "two_rc": 6, "two_cpe": 8,
+        "randles_rc": 5, "randles_cpe": 6,
+        "two_rc": 7, "two_cpe": 9,
     }[spec.kind] - len(constants)
     dummy = CustomCircuit(spec.circuit, initial_guess=[1.0] * dummy_count,
                           constants=constants)
@@ -397,13 +401,13 @@ def fit_model(s: Spectrum, spec: ModelSpec, n_starts: int = 8) -> FitResult:
 def all_specs(s: Spectrum) -> list[ModelSpec]:
     if s.dataset == "exampleData":
         return [
-            ModelSpec("randles_rc_w", "R0-p(R1,C1)-W1", "randles_rc"),
-            ModelSpec("randles_cpe_w", "R0-p(R1,CPE1)-W1", "randles_cpe"),
-            ModelSpec("two_rc_w_fixed_r0", "R0-p(R1,C1)-p(R2,C2)-W1",
+            ModelSpec("randles_rc_w", "R0-p(R1-Wo1,C1)", "randles_rc"),
+            ModelSpec("randles_cpe_w", "R0-p(R1-Wo1,CPE1)", "randles_cpe"),
+            ModelSpec("two_rc_w_fixed_r0", "R0-p(R1,C1)-p(R2,C2)-Wo1",
                       "two_rc", fixed_r0=True),
-            ModelSpec("two_rc_w_free", "R0-p(R1,C1)-p(R2,C2)-W1", "two_rc"),
+            ModelSpec("two_rc_w_free", "R0-p(R1,C1)-p(R2,C2)-Wo1", "two_rc"),
         ]
-    return [ModelSpec("two_cpe_w", "R0-p(R1,CPE1)-p(R2,CPE2)-W1", "two_cpe")]
+    return [ModelSpec("two_cpe_w", "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1", "two_cpe")]
 
 
 def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -438,7 +442,7 @@ def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, p
             "circuit": fit.spec.circuit,
             "fixed_parameters": json.dumps(fit.fixed, sort_keys=True),
             "n_multistarts": fit.n_starts,
-            "warnings": fit.warning_text,
+            "warnings": fit.warning_text or "none",
         })
         for i, (f, z, zh, used, orig) in enumerate(zip(
                 fit.spectrum.frequency, fit.spectrum.z, fit.z_fit,
@@ -543,9 +547,9 @@ def write_report(fits: list[FitResult], params: pd.DataFrame, metrics: pd.DataFr
 
     # Compact battery comparison using fitted free parameters.
     pivot = params[(params.model == "two_cpe_w") & params.parameter.isin(
-        ["R0", "R1", "R2", "CPE1_1", "CPE2_1", "W1"])]
+        ["R0", "R1", "R2", "CPE1_1", "CPE2_1", "Wo1_0", "Wo1_1"])]
     pivot = pivot.pivot(index="dataset", columns="parameter", values="value").reset_index()
-    for c in ["R0", "R1", "R2", "CPE1_1", "CPE2_1", "W1"]:
+    for c in ["R0", "R1", "R2", "CPE1_1", "CPE2_1", "Wo1_0", "Wo1_1"]:
         if c not in pivot: pivot[c] = np.nan
     pivot["R1_plus_R2_ohm"] = pivot.R1 + pivot.R2
 
@@ -576,7 +580,7 @@ Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-W1`. The repeated sca
 
 | Model identifier | impedance.py circuit string | Purpose |
 |---|---|---|
-| `randles_rc_w` | `R0-p(R1,C1)-W1` | Ideal-capacitor Randles-type baseline plus semi-infinite diffusion. |
+| `randles_rc_w` | `R0-p(R1,C1)-W1` | Ideal-capacitor Randles-type baseline plus finite-length diffusion. |
 | `randles_cpe_w` | `R0-p(R1,CPE1)-W1` | Tests non-ideal/distributed interfacial capacitance. |
 | `two_rc_w_fixed_r0` | `R0-p(R1,C1)-p(R2,C2)-W1` | Two ideal time constants; data-derived series resistance held fixed. |
 | `two_rc_w_free` | `R0-p(R1,C1)-p(R2,C2)-W1` | Same topology with all parameters free. |
@@ -592,7 +596,7 @@ AICc penalizes extra free parameters. A lower AICc is evidence for better expect
 
 ## 4. Battery scan comparison
 
-{markdown_table(pivot, ['dataset','R0','R1','R2','R1_plus_R2_ohm','CPE1_1','CPE2_1','W1'], {'R0':'.6g','R1':'.6g','R2':'.6g','R1_plus_R2_ohm':'.6g','CPE1_1':'.4f','CPE2_1':'.4f','W1':'.6g'})}
+{markdown_table(pivot, ['dataset','R0','R1','R2','R1_plus_R2_ohm','CPE1_1','CPE2_1','Wo1_0','Wo1_1'], {'R0':'.6g','R1':'.6g','R2':'.6g','R1_plus_R2_ohm':'.6g','CPE1_1':'.4f','CPE2_1':'.4f','Wo1_0':'.6g','Wo1_1':'.6g'})}
 
 {markdown_table(battery, ['dataset','rss_complex','rmse_complex','aicc','fit_n_points','excluded_inductive_points'], {'rss_complex':'.6g','rmse_complex':'.6g','aicc':'.3f'})}
 
@@ -604,7 +608,7 @@ The SOC 100 and SOC 70 differences are descriptive associations, not causal esti
 - **High-frequency real intercept:** `R0` represents the lumped ohmic contribution (electrolyte, current collectors, contacts, and instrument path). It is not separable into those components from these spectra alone.
 - **High-to-intermediate frequencies:** the first `R||CPE` branch captures the faster depressed arc. A CPE exponent below one is a compact empirical description of distributed time constants/non-ideal capacitance; it is not, by itself, proof of a unique surface morphology.
 - **Intermediate-to-low frequencies:** the second `R||CPE` branch captures a slower interfacial/porous-electrode relaxation. In a complete alkaline cell this may combine charge-transfer, double-layer, porous-electrode, and coupled electrode contributions. Without a reference electrode or perturbation series, anode/cathode attribution is underdetermined.
-- **Lowest frequencies:** the semi-infinite Warburg term provides the prescribed `45°`-type diffusion impedance. The measured window does not establish whether diffusion is truly semi-infinite outside the observed range; finite-length alternatives were not among the prescribed candidates.
+- **Lowest frequencies:** the open finite-space Warburg term provides the prescribed `45°`-type diffusion impedance. The measured window does not establish whether diffusion is truly semi-infinite outside the observed range; finite-length alternatives were not among the prescribed candidates.
 
 These assignments follow the impedance.py element definitions and general EIS/battery literature listed below. They are deliberately phrased as circuit-consistent interpretations rather than unique mechanistic identifications.
 
@@ -618,7 +622,7 @@ These assignments follow the impedance.py element definitions and general EIS/ba
 
 1. Equivalent circuits are non-unique and topology selection is restricted to the contract's candidates.
 2. The models omit inductance, so the high-frequency loop remains systematically unmatched.
-3. Semi-infinite Warburg behavior is assumed; the finite experimental window cannot establish asymptotic transport geometry.
+3. Open finite-space Warburg behavior is assumed; the finite experimental window cannot establish asymptotic transport geometry.
 4. No replicate cells at the same SOC are available, so SOC and cell identity are confounded.
 5. Parameter covariance is local and does not capture multimodality; multistart fitting reduces but cannot eliminate this risk.
 6. No Kramers–Kronig linearity/causality/stability claim is made because the task supplies no time-domain stationarity checks and the inductive segment is not represented by the prescribed models.
