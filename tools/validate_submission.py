@@ -98,6 +98,10 @@ def main() -> int:
         assert section.lower() in report.lower(), section
     assert 'Qu, Ji, and Qu' in report and 'Wang et al.' not in report
     assert 'statistically optimistic' in report
+    manuscript=(root/'MANUSCRIPT.md').read_text()
+    assert all(f'{i}.' in manuscript.split('## References',1)[1] for i in range(1,11))
+    for citation in ['[1–3]','[4]','[5–7]','[6,9]','[7,8]','[10]']:
+        assert citation in manuscript, citation
     manifest=[]
     for fp in sorted(out.rglob('*')):
         if fp.is_file(): manifest.append({'path':str(fp.relative_to(out)),'bytes':fp.stat().st_size,'sha256':sha(fp)})

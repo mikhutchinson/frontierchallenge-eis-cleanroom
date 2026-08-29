@@ -6,9 +6,9 @@ Electrochemical impedance spectroscopy (EIS) can separate processes that overlap
 
 ## Introduction
 
-Electrochemical impedance spectroscopy probes a system over a range of perturbation frequencies and represents the response as a complex impedance, \(Z(\omega)=Z'(\omega)+jZ''(\omega)\). Distinct frequency regions may reflect ohmic losses, interfacial relaxation, distributed capacitive behavior, porous-electrode effects, and diffusion. Equivalent circuits provide a compact way to describe those regions, but they do not by themselves establish a unique microscopic mechanism. Different circuit topologies may reproduce the same spectrum, parameter estimates may be correlated, and apparently precise solutions may lie on poorly identified boundaries.
+Electrochemical impedance spectroscopy probes a system over a range of perturbation frequencies and represents the response as a complex impedance, \(Z(\omega)=Z'(\omega)+jZ''(\omega)\). Distinct frequency regions may reflect ohmic losses, interfacial relaxation, distributed capacitive behavior, porous-electrode effects, and diffusion [6,9]. Equivalent circuits provide a compact way to describe those regions, but they do not by themselves establish a unique microscopic mechanism. Different circuit topologies may reproduce the same spectrum, parameter estimates may be correlated, and apparently precise solutions may lie on poorly identified boundaries [5–7].
 
-These limitations become especially important in complete batteries. A two-terminal measurement combines contributions from both electrodes, the electrolyte, current collectors, contacts, and the measurement path. Without a reference electrode, a controlled perturbation series, or replicate cells at each state of charge, fitted branches cannot be assigned uniquely to individual physical processes. High-frequency inductive behavior also presents a practical modeling problem when the prescribed candidate circuits contain no inductive element.
+These limitations become especially important in complete batteries. A two-terminal measurement combines contributions from both electrodes, the electrolyte, current collectors, contacts, and the measurement path [6,9]. Without a reference electrode, a controlled perturbation series, or replicate cells at each state of charge, fitted branches cannot be assigned uniquely to individual physical processes [6]. High-frequency inductive behavior also presents a practical modeling problem when the prescribed candidate circuits contain no inductive element.
 
 The present analysis had three objectives. First, it compared four specified equivalent-circuit candidates on a standard `impedance.py` example spectrum using a common complex-residual and AICc framework. Second, it fitted a prescribed two-CPE, two-time-constant, finite-diffusion model to repeated alkaline-battery sweeps at nominal SOC 100 and SOC 70. Third, it produced a fully auditable artifact bundle in which preprocessing, model definitions, parameter estimates, residuals, figures, provenance, and reproduction instructions could be checked independently.
 
@@ -16,7 +16,7 @@ The present analysis had three objectives. First, it compared four specified equ
 
 ### Data sources and integrity
 
-Five independent spectra were analyzed. The reference spectrum, [`exampleData.csv`](data/exampleData.csv), contains 66 headerless observations of frequency, real impedance, and imaginary impedance. The alkaline-battery data were derived from the public dataset associated with Barresi and colleagues. Two SOC 100 scans were supplied as lossless extractions of the first and second side-by-side scan blocks in the source file. The SOC 70 source contains 122 rows; a multi-decade frequency reset after row 61 separates it into two 61-point sweeps.
+Five independent spectra were analyzed. The reference spectrum, [`exampleData.csv`](data/exampleData.csv), contains 66 headerless observations of frequency, real impedance, and imaginary impedance. The alkaline-battery data were derived from the public dataset associated with Barresi and colleagues [4]. Two SOC 100 scans were supplied as lossless extractions of the first and second side-by-side scan blocks in the source file. The SOC 70 source contains 122 rows; a multi-decade frequency reset after row 61 separates it into two 61-point sweeps.
 
 Input SHA-256 hashes, source URLs, and license information are recorded in [`output/provenance.json`](output/provenance.json). The complete input boundary is additionally recorded in [`AGENT_VISIBLE_FILE_HASHES.json`](AGENT_VISIBLE_FILE_HASHES.json). Input checks confirmed positive frequencies and finite required values. Original row order and repeated frequencies were retained in the exported data.
 
@@ -30,11 +30,11 @@ Z''=-[-\operatorname{Im}(Z_{tot})].
 
 The SOC 70 sweeps were fitted separately and retained under the public source-file identifier `Cell_2_GEIS_SOC70`, with `scan_index` and model identifiers distinguishing the two sweeps. This avoids both artificial concatenation and loss of source traceability.
 
-The prescribed circuits contain no inductive element. Observations with \(Z''\ge 0\), corresponding to the high-frequency inductive region, were therefore excluded from parameter estimation. They were not discarded: each remains in [`output/results/fitted_spectrum.csv`](output/results/fitted_spectrum.csv), is marked by `used_in_fit=0`, appears in the figures, and contributes to the declared full-spectrum residual metrics. No residual-driven outlier deletion was performed.
+The prescribed circuits contain no inductive element. Consistent with the documented `impedance.py` preprocessing approach, observations with \(Z''\ge 0\), corresponding to the high-frequency inductive region, were therefore excluded from parameter estimation [3]. They were not discarded: each remains in [`output/results/fitted_spectrum.csv`](output/results/fitted_spectrum.csv), is marked by `used_in_fit=0`, appears in the figures, and contributes to the declared full-spectrum residual metrics. No residual-driven outlier deletion was performed.
 
 ### Equivalent circuits
 
-The reference spectrum was fitted with four candidate models implemented through `impedance.py` 1.7.1 `CustomCircuit`:
+The reference spectrum was fitted with four candidate models implemented through `impedance.py` 1.7.1 `CustomCircuit` [1–3]:
 
 1. Ideal-capacitor Randles-type model with open finite-space diffusion: `R0-p(R1-Wo1,C1)`.
 2. Constant-phase-element variant: `R0-p(R1-Wo1,CPE1)`.
@@ -47,11 +47,11 @@ Each battery sweep was fitted with
 
 `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1`,
 
-where `CPE1` and `CPE2` represent distributed, non-ideal capacitive relaxations and `Wo1` is the open finite-space Warburg element. The exact model strings and constants are preserved in [`output/results/model_metrics.csv`](output/results/model_metrics.csv) and [`output/provenance.json`](output/provenance.json).
+where `CPE1` and `CPE2` represent distributed, non-ideal capacitive relaxations [2,5] and `Wo1` is the open finite-space Warburg element [2]. The exact model strings and constants are preserved in [`output/results/model_metrics.csv`](output/results/model_metrics.csv) and [`output/provenance.json`](output/provenance.json).
 
 ### Optimization and uncertainty
 
-Fits used unweighted complex nonlinear least squares. Eight deterministic multistarts were generated from data-derived resistance scales, peak-frequency estimates, and low-frequency diffusion scales. The converged solution with the lowest fitting-subset complex residual sum of squares was retained.
+Fits used the unweighted complex nonlinear least-squares interface provided by `impedance.py` [1,3]. Eight deterministic multistarts were generated from data-derived resistance scales, peak-frequency estimates, and low-frequency diffusion scales. The converged solution with the lowest fitting-subset complex residual sum of squares was retained.
 
 Local parameter uncertainty was estimated from a finite-difference complex Jacobian expressed in relative parameter coordinates. Singular-value decomposition was applied directly to the scaled Jacobian, avoiding formation of the normal matrix and the associated squaring of its condition number. Full-rank estimates were checked against the independent optimizer covariance. When the scaled Jacobian was rank deficient, no finite marginal standard error was claimed: the required numeric field was set to a documented zero sentinel for every free parameter in that model. A zero associated with a fixed parameter remains explicitly marked `is_fixed=1`. Rank, condition number, uncertainty method, and optimizer estimates are reported in [`output/results/fit_parameters.csv`](output/results/fit_parameters.csv).
 
@@ -73,7 +73,7 @@ and
 \mathrm{AICc}=N\ln(\mathrm{RSS}/N)+2k+\frac{2k(k+1)}{N-k-1},
 \]
 
-where \(k\) is the number of free parameters. AICc comparisons were restricted to candidates fitted to the same dataset. The required `aicc` field uses this contract definition. A sensitivity calculation treats the same-spectrum estimate used to fix \(R_0\) as one additional effective degree of freedom.
+where \(k\) is the number of free parameters [10]. AICc comparisons were restricted to candidates fitted to the same dataset. The required `aicc` field uses this contract definition. A sensitivity calculation treats the same-spectrum estimate used to fix \(R_0\) as one additional effective degree of freedom.
 
 ### Reproducibility and validation
 
@@ -110,7 +110,7 @@ Complete fitted values, units, fixed/free status, and uncertainty fields are rep
 
 ### Lin-KK compatibility diagnostic
 
-The full spectra were also evaluated with the `impedance.py` Lin-KK routine using complex fitting, `c=0.85`, and at most 50 logarithmically distributed RC elements. Normalized complex RMSE values were 0.0302 for the reference spectrum, 0.1488 and 0.0783 for the two SOC 100 scans, and 0.0369 and 0.0311 for the SOC 70 scans. The larger SOC 100 residuals agree with the weaker equivalent-circuit fits. These values are compatibility diagnostics rather than binary validity determinations: the Lin-KK implementation uses an RC-only basis and therefore cannot represent the retained high-frequency inductive response. It also cannot independently establish measurement stationarity.
+The full spectra were also evaluated with the `impedance.py` implementation of the linear Kramers–Kronig method using complex fitting, `c=0.85`, and at most 50 logarithmically distributed RC elements [7,8]. Normalized complex RMSE values were 0.0302 for the reference spectrum, 0.1488 and 0.0783 for the two SOC 100 scans, and 0.0369 and 0.0311 for the SOC 70 scans. The larger SOC 100 residuals agree with the weaker equivalent-circuit fits. These values are compatibility diagnostics rather than binary validity determinations: the Lin-KK implementation uses an RC-only basis and therefore cannot represent the retained high-frequency inductive response. It also cannot independently establish measurement stationarity.
 
 ### Visual and residual evidence
 
@@ -126,13 +126,13 @@ The principal systematic mismatch occurs in the high-frequency inductive region,
 
 The reference-spectrum comparison supports two resolvable ideal relaxation times in addition to series resistance and finite-length diffusion. Fixing the series resistance at a data-derived high-frequency crossing yielded the best contract AICc and only a small advantage after accounting for the additional effective degree of freedom. This is a statistical preference within the supplied candidate family. It does not establish that the fitted branches correspond uniquely to two discrete electrochemical mechanisms.
 
-The CPE Randles candidate performed better than its ideal-capacitor counterpart, consistent with a depressed arc or distributed relaxation. A CPE exponent below unity can summarize heterogeneity, porosity, nonuniform current distribution, or a distribution of time constants, but the exponent alone cannot distinguish among these causes. The same caution applies to the two CPE branches used for the battery spectra.
+The CPE Randles candidate performed better than its ideal-capacitor counterpart, consistent with a depressed arc or distributed relaxation. A CPE exponent below unity can summarize heterogeneity, porosity, nonuniform current distribution, or a distribution of time constants, but the exponent alone cannot distinguish among these causes [5]. The same caution applies to the two CPE branches used for the battery spectra.
 
 The SOC 70 sweeps showed strong repeatability at the level of fitted series resistance, combined branch resistance, and residual error. In contrast, the SOC 100 scans differed markedly. Because the dataset contains one cell at each nominal SOC and repeated scans are not independent cell replicates, the difference cannot be attributed causally to state of charge. Cell identity, measurement history, nonstationarity, and scan-specific model identifiability remain confounded.
 
-The high-frequency inductive loop was handled explicitly rather than absorbed into an unrelated capacitive branch. Excluding those points from estimation is consistent with fitting a non-inductive candidate family, while retaining them in full-spectrum residual metrics prevents the omission from artificially improving the reported model performance. A future unrestricted analysis could compare otherwise identical topologies with an explicit series inductance.
+The high-frequency inductive loop was handled explicitly rather than absorbed into an unrelated capacitive branch [3,9]. Excluding those points from estimation is consistent with fitting a non-inductive candidate family, while retaining them in full-spectrum residual metrics prevents the omission from artificially improving the reported model performance. A future unrestricted analysis could compare otherwise identical topologies with an explicit series inductance.
 
-The open finite-space Warburg element represents bounded diffusion and approaches a finite-length low-frequency response. Its use is appropriate to the prescribed model family, but the available frequency window does not uniquely determine diffusion geometry or boundary condition. Several parameters, particularly in SOC 100 scan 1, lie in correlated or rank-deficient directions. Multistart optimization reduces sensitivity to initialization but cannot resolve structural non-identifiability.
+The open finite-space Warburg element represents bounded diffusion and approaches a finite-length low-frequency response [2,6,9]. Its use is appropriate to the prescribed model family, but the available frequency window does not uniquely determine diffusion geometry or boundary condition. Several parameters, particularly in SOC 100 scan 1, lie in correlated or rank-deficient directions. Multistart optimization reduces sensitivity to initialization but cannot resolve structural non-identifiability.
 
 The analysis has five main limitations. First, equivalent circuits are non-unique. Second, the candidate set omits inductance despite an observed inductive segment; the RC-only Lin-KK basis shares this limitation. Third, there are no replicate cells at the same SOC, so between-cell and SOC effects cannot be separated. Fourth, local covariance estimates do not characterize multimodal uncertainty. Fifth, the fixed-\(R_0\) candidate uses a same-spectrum preprocessing estimate, so its contract AICc advantage is optimistic. Profile likelihoods, bootstrap resampling, Bayesian posterior exploration, explicit inductive candidates, and replicate-cell experiments would provide a stronger basis for mechanistic inference.
 
@@ -171,3 +171,4 @@ The complete analysis bundle is located under [`output/`](output/):
 7. Schönleber M, Ivers-Tiffée E. Approximability of impedance spectra by RC elements and implications for impedance analysis. *Electrochemistry Communications*. 2015;58:15–19. https://doi.org/10.1016/j.elecom.2015.05.018
 8. Schönleber M, Klotz D, Ivers-Tiffée E. A method for improving the robustness of linear Kramers–Kronig validity tests. *Electrochimica Acta*. 2014;131:20–27. https://doi.org/10.1016/j.electacta.2014.01.034
 9. Gamry Instruments. Basics of Electrochemical Impedance Spectroscopy. https://www.gamry.com/application-notes/EIS/basics-of-electrochemical-impedance-spectroscopy/
+10. Hurvich CM, Tsai CL. Regression and time series model selection in small samples. *Biometrika*. 1989;76(2):297–307. https://doi.org/10.1093/biomet/76.2.297
