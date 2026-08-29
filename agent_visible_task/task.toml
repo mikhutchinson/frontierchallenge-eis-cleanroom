@@ -1,0 +1,30 @@
+schema_version = "1.1"
+
+[task]
+name = "apodex-ai/task-116-eis-equivalent-circuit-analysis"
+description = "完成公开EIS数据的等效电路拟合、模型比较和数据分析。"
+authors = [{ name = "Apodex AI & GADE Union" }]
+keywords = ["EIS", "impedance.py", "equivalent circuit", "alkaline battery", "model comparison"]
+
+[metadata]
+frontierchallenge_task_id = "task_116_eis_equivalent_circuit_analysis"
+difficulty = "hard"
+category = "实验数据分析、等效电路参数拟合、模型选择、异常数据检查、科研绘图、报告生成。"
+
+[agent]
+user = "mambauser"
+timeout_sec = 7200.0
+network_mode = "public"
+
+[verifier]
+timeout_sec = 3600.0
+
+[environment]
+network_mode = "public"
+build_timeout_sec = 1800.0
+cpus = 2
+memory_mb = 4096
+storage_mb = 4096
+gpus = 0
+
+# LOCAL_SMOKE_ONLY: agent network changed to public because macOS Docker cannot enforce Harbor allowlists.
