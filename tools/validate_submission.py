@@ -33,11 +33,13 @@ def main() -> int:
         'exampleData': {'randles_rc_w','randles_cpe_w','two_rc_w_fixed_r0','two_rc_w_free'},
         'Cell_1_GEIS_SOC100_scan1': {'two_cpe_w'},
         'Cell_1_GEIS_SOC100_scan2': {'two_cpe_w'},
-        'Cell_2_GEIS_SOC70_scan1': {'two_cpe_w'},
-        'Cell_2_GEIS_SOC70_scan2': {'two_cpe_w'},
+        'Cell_2_GEIS_SOC70': {'two_cpe_w_scan1', 'two_cpe_w_scan2'},
     }
     assert len(m)==8, len(m)
     for d,mods in expected_models.items(): assert set(m.loc[m.dataset==d,'model'])==mods, d
+    assert {"scan_index", "source_file"} <= set(m)
+    assert all(r.dataset == Path(r.source_file).stem for r in m.itertuples()), "dataset/source stem"
+    assert set(m.loc[m.dataset == "Cell_2_GEIS_SOC70", "scan_index"]) == {1, 2}
     assert len(s)==508, len(s)
     for _,r in m.iterrows():
         b=s[(s.dataset==r.dataset)&(s.model==r.model)]

@@ -221,9 +221,11 @@ def load_inputs(data_dir: Path) -> tuple[list[Spectrum], dict]:
     if breaks != [61]:
         raise ValueError(f"Expected one SOC70 sweep reset at row 61, found {breaks}")
     c2a, c2b = c2.iloc[:61].copy(), c2.iloc[61:].copy()
-    spectra.append(from_battery(c2a, "Cell_2_GEIS_SOC70_scan1",
+    # The public identifier convention requires the delivered file stem as
+    # `dataset`; scan identity is preserved separately and in the model name.
+    spectra.append(from_battery(c2a, "Cell_2_GEIS_SOC70",
                                 "Cell_2_GEIS_SOC70.csv", 1, 0))
-    spectra.append(from_battery(c2b, "Cell_2_GEIS_SOC70_scan2",
+    spectra.append(from_battery(c2b, "Cell_2_GEIS_SOC70",
                                 "Cell_2_GEIS_SOC70.csv", 2, 61))
     validation["checks"].append({
         "check": "soc70_frequency_reset_split", "passed": True,
@@ -407,7 +409,9 @@ def all_specs(s: Spectrum) -> list[ModelSpec]:
                       "two_rc", fixed_r0=True),
             ModelSpec("two_rc_w_free", "R0-p(R1,C1)-p(R2,C2)-Wo1", "two_rc"),
         ]
-    return [ModelSpec("two_cpe_w", "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1", "two_cpe")]
+    model = (f"two_cpe_w_scan{s.scan_index}"
+             if s.source_file == "Cell_2_GEIS_SOC70.csv" else "two_cpe_w")
+    return [ModelSpec(model, "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1", "two_cpe")]
 
 
 def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -425,6 +429,8 @@ def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, p
         for name, value, se, unit, is_fixed, ose in full:
             p_rows.append({
                 "dataset": fit.spectrum.dataset, "model": fit.spec.model,
+                "scan_index": fit.spectrum.scan_index,
+                "source_file": fit.spectrum.source_file,
                 "parameter": name, "value": value, "std_error": se,
                 "unit": unit, "is_fixed": int(is_fixed),
                 "optimizer_std_error": ose,
@@ -432,6 +438,8 @@ def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, p
             })
         m_rows.append({
             "dataset": fit.spectrum.dataset, "model": fit.spec.model,
+            "scan_index": fit.spectrum.scan_index,
+            "source_file": fit.spectrum.source_file,
             "n_points": len(fit.spectrum.z), "n_parameters": len(fit.params),
             "rss_complex": fit.all_rss, "rmse_complex": fit.rmse,
             "aicc": fit.aicc, "converged": int(fit.converged),
@@ -460,19 +468,22 @@ def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, p
     params = pd.DataFrame(p_rows)
     metrics = pd.DataFrame(m_rows)
     spectra = pd.DataFrame(s_rows)
-    metrics["delta_aicc_within_dataset"] = metrics.groupby("dataset")["aicc"].transform(lambda x: x - x.min())
+    metrics["delta_aicc_within_dataset"] = metrics.groupby(["dataset", "scan_index"])["aicc"].transform(lambda x: x - x.min())
     metrics["selected_by_aicc"] = (metrics["delta_aicc_within_dataset"] < 1e-9).astype(int)
     return params, metrics, spectra
 
 
 def make_figures(fits: list[FitResult], output_dir: Path) -> None:
     fig_dir = output_dir / "figures"; fig_dir.mkdir(parents=True, exist_ok=True)
-    datasets = list(dict.fromkeys(f.spectrum.dataset for f in fits))
+    groups = list(dict.fromkeys(
+        (f.spectrum.dataset, f.spectrum.scan_index) for f in fits))
     cmap = plt.get_cmap("tab10")
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 10), constrained_layout=True)
-    for ax, dataset in zip(axes.flat, datasets):
-        fs = [x for x in fits if x.spectrum.dataset == dataset]; s = fs[0].spectrum
+    for ax, (dataset, scan_index) in zip(axes.flat, groups):
+        fs = [x for x in fits if (x.spectrum.dataset, x.spectrum.scan_index) == (dataset, scan_index)]
+        s = fs[0].spectrum
+        display = dataset + (f" (scan {scan_index})" if dataset == "Cell_2_GEIS_SOC70" else "")
         ax.plot(s.z.real, -s.z.imag, "ko", ms=3.5, label="observed")
         excluded = ~fs[0].used_in_fit
         if excluded.any():
@@ -482,15 +493,17 @@ def make_figures(fits: list[FitResult], output_dir: Path) -> None:
         for j, fit in enumerate(fs):
             ax.plot(fit.z_fit.real[order], -fit.z_fit.imag[order], "-",
                     lw=1.6, color=cmap(j), label=fit.spec.model)
-        ax.set_title(dataset); ax.set_xlabel("Z' (Ohm)"); ax.set_ylabel("-Z'' (Ohm)")
+        ax.set_title(display); ax.set_xlabel("Z' (Ohm)"); ax.set_ylabel("-Z'' (Ohm)")
         ax.grid(alpha=.25); ax.legend(fontsize=7)
-    for ax in axes.flat[len(datasets):]: ax.axis("off")
+    for ax in axes.flat[len(groups):]: ax.axis("off")
     fig.suptitle("EIS Nyquist data and prescribed equivalent-circuit models", fontsize=14)
     fig.savefig(fig_dir / "nyquist_models.png", dpi=220); plt.close(fig)
 
-    fig, axes = plt.subplots(len(datasets), 2, figsize=(15, 4 * len(datasets)), constrained_layout=True)
-    for row, dataset in enumerate(datasets):
-        fs = [x for x in fits if x.spectrum.dataset == dataset]; s = fs[0].spectrum
+    fig, axes = plt.subplots(len(groups), 2, figsize=(15, 4 * len(groups)), constrained_layout=True)
+    for row, (dataset, scan_index) in enumerate(groups):
+        fs = [x for x in fits if (x.spectrum.dataset, x.spectrum.scan_index) == (dataset, scan_index)]
+        s = fs[0].spectrum
+        display = dataset + (f" (scan {scan_index})" if dataset == "Cell_2_GEIS_SOC70" else "")
         order = np.argsort(s.frequency); f = s.frequency[order]; z = s.z[order]
         axm, axp = axes[row]
         axm.loglog(f, np.abs(z), "ko", ms=3, label="observed")
@@ -502,13 +515,15 @@ def make_figures(fits: list[FitResult], output_dir: Path) -> None:
         axm.set_ylabel("|Z| (Ohm)"); axp.set_ylabel("Phase (degrees)")
         for ax in (axm, axp):
             ax.set_xlabel("Frequency (Hz)"); ax.grid(which="both", alpha=.25); ax.legend(fontsize=7)
-        axm.set_title(f"{dataset}: magnitude"); axp.set_title(f"{dataset}: phase")
+        axm.set_title(f"{display}: magnitude"); axp.set_title(f"{display}: phase")
     fig.suptitle("Bode magnitude and phase", fontsize=14)
     fig.savefig(fig_dir / "bode_models.png", dpi=220); plt.close(fig)
 
-    fig, axes = plt.subplots(len(datasets), 2, figsize=(15, 3.7 * len(datasets)), constrained_layout=True)
-    for row, dataset in enumerate(datasets):
-        fs = [x for x in fits if x.spectrum.dataset == dataset]; s = fs[0].spectrum
+    fig, axes = plt.subplots(len(groups), 2, figsize=(15, 3.7 * len(groups)), constrained_layout=True)
+    for row, (dataset, scan_index) in enumerate(groups):
+        fs = [x for x in fits if (x.spectrum.dataset, x.spectrum.scan_index) == (dataset, scan_index)]
+        s = fs[0].spectrum
+        display = dataset + (f" (scan {scan_index})" if dataset == "Cell_2_GEIS_SOC70" else "")
         order = np.argsort(s.frequency); f = s.frequency[order]
         for j, fit in enumerate(fs):
             res = (s.z - fit.z_fit)[order]
@@ -517,7 +532,7 @@ def make_figures(fits: list[FitResult], output_dir: Path) -> None:
         for col, label in enumerate(("Re residual (Ohm)", "Im residual (Ohm)")):
             axes[row, col].axhline(0, color="black", lw=.7)
             axes[row, col].set_xlabel("Frequency (Hz)"); axes[row, col].set_ylabel(label)
-            axes[row, col].set_title(f"{dataset}: {label.split()[0]}")
+            axes[row, col].set_title(f"{display}: {label.split()[0]}")
             axes[row, col].grid(which="both", alpha=.25); axes[row, col].legend(fontsize=7)
     fig.suptitle("Complex residuals (observed - fitted)", fontsize=14)
     fig.savefig(fig_dir / "residuals.png", dpi=220); plt.close(fig)
@@ -546,9 +561,9 @@ def write_report(fits: list[FitResult], params: pd.DataFrame, metrics: pd.DataFr
     battery = metrics[metrics.dataset != "exampleData"].copy()
 
     # Compact battery comparison using fitted free parameters.
-    pivot = params[(params.model == "two_cpe_w") & params.parameter.isin(
+    pivot = params[params.model.str.startswith("two_cpe_w") & params.parameter.isin(
         ["R0", "R1", "R2", "CPE1_1", "CPE2_1", "Wo1_0", "Wo1_1"])]
-    pivot = pivot.pivot(index="dataset", columns="parameter", values="value").reset_index()
+    pivot = pivot.pivot(index=["dataset", "scan_index", "model"], columns="parameter", values="value").reset_index()
     for c in ["R0", "R1", "R2", "CPE1_1", "CPE2_1", "Wo1_0", "Wo1_1"]:
         if c not in pivot: pivot[c] = np.nan
     pivot["R1_plus_R2_ohm"] = pivot.R1 + pivot.R2
@@ -557,11 +572,11 @@ def write_report(fits: list[FitResult], params: pd.DataFrame, metrics: pd.DataFr
 
 ## Executive summary
 
-Five independent spectra were analyzed: the impedance.py generic example, two losslessly separated SOC 100 alkaline-cell scans, and two SOC 70 sweeps detected and separated at the frequency reset in the 122-row source file. The battery sign convention was reconstructed exactly as specified: `Im(Z) = -[-Im(Ztot)]`. High-frequency points with positive `Im(Z)` are inductive and were retained in all artifacts/plots but excluded from parameter estimation because the prescribed candidate families contain no inductance. Required full-spectrum residual metrics still include those points.
+Five independent spectra were analyzed: the impedance.py generic example, two losslessly separated SOC 100 alkaline-cell scans, and two SOC 70 sweeps detected at the frequency reset in the 122-row source file and retained under the public file-stem dataset identifier with explicit scan indices. The battery sign convention was reconstructed exactly as specified: `Im(Z) = -[-Im(Ztot)]`. High-frequency points with positive `Im(Z)` are inductive and were retained in all artifacts/plots but excluded from parameter estimation because the prescribed candidate families contain no inductance. Required full-spectrum residual metrics still include those points.
 
 For `exampleData`, all four prescribed candidates converged. AICc selects **{best['model']}** (AICc {best['aicc']:.3f}, RMSE {best['rmse_complex']:.6g} Ohm); model preference is based on the complete complex residual and the declared free-parameter count, not visual appearance. The fixed two-time-constant model fixes only `R0`, at a value independently derived by interpolating the high-frequency real-axis crossing; no fitted or reference-answer parameter is hard-coded.
 
-Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-W1`. The repeated scans are reported separately, preventing artificial joining of independent sweeps. Parameter uncertainty is the local one-standard-deviation covariance estimate from a finite-difference complex Jacobian over the points actually used in fitting.
+Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1`. The repeated scans are reported separately, preventing artificial joining of independent sweeps. Parameter uncertainty is the local one-standard-deviation covariance estimate from a finite-difference complex Jacobian over the points actually used in fitting.
 
 ## 1. Input validation and preprocessing
 
@@ -574,7 +589,7 @@ Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-W1`. The repeated sca
 
 ### Validation counts
 
-{markdown_table(metrics[['dataset','model','n_points','fit_n_points','excluded_inductive_points']].drop_duplicates('dataset'), ['dataset','n_points','fit_n_points','excluded_inductive_points'])}
+{markdown_table(metrics[['dataset','scan_index','model','n_points','fit_n_points','excluded_inductive_points']].drop_duplicates(['dataset','scan_index']), ['dataset','scan_index','model','n_points','fit_n_points','excluded_inductive_points'])}
 
 ## 2. Candidate circuits and fitting method
 
@@ -584,7 +599,7 @@ Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-W1`. The repeated sca
 | `randles_cpe_w` | `R0-p(R1-Wo1,CPE1)` | Tests non-ideal/distributed interfacial capacitance. |
 | `two_rc_w_fixed_r0` | `R0-p(R1,C1)-p(R2,C2)-W1` | Two ideal time constants; data-derived series resistance held fixed. |
 | `two_rc_w_free` | `R0-p(R1,C1)-p(R2,C2)-W1` | Same topology with all parameters free. |
-| `two_cpe_w` | `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1` | Prescribed battery model with two distributed time constants and diffusion. |
+| `two_cpe_w` / `two_cpe_w_scan1/2` | `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1` | Prescribed battery model with two distributed time constants and diffusion. |
 
 Fits use unweighted complex nonlinear least squares through impedance.py 1.7.1 `CustomCircuit`. Eight deterministic multistarts are generated from data-derived resistance, peak-frequency, and low-frequency diffusion scales. The best converged solution is selected by fitting-subset RSS. Model comparison uses the task-defined full-spectrum formulas with `N=2n`: `RMSE=sqrt(RSS/N)` and `AICc=N ln(RSS/N)+2k+2k(k+1)/(N-k-1)`.
 
@@ -596,9 +611,9 @@ AICc penalizes extra free parameters. A lower AICc is evidence for better expect
 
 ## 4. Battery scan comparison
 
-{markdown_table(pivot, ['dataset','R0','R1','R2','R1_plus_R2_ohm','CPE1_1','CPE2_1','Wo1_0','Wo1_1'], {'R0':'.6g','R1':'.6g','R2':'.6g','R1_plus_R2_ohm':'.6g','CPE1_1':'.4f','CPE2_1':'.4f','Wo1_0':'.6g','Wo1_1':'.6g'})}
+{markdown_table(pivot, ['dataset','scan_index','model','R0','R1','R2','R1_plus_R2_ohm','CPE1_1','CPE2_1','Wo1_0','Wo1_1'], {'R0':'.6g','R1':'.6g','R2':'.6g','R1_plus_R2_ohm':'.6g','CPE1_1':'.4f','CPE2_1':'.4f','Wo1_0':'.6g','Wo1_1':'.6g'})}
 
-{markdown_table(battery, ['dataset','rss_complex','rmse_complex','aicc','fit_n_points','excluded_inductive_points'], {'rss_complex':'.6g','rmse_complex':'.6g','aicc':'.3f'})}
+{markdown_table(battery, ['dataset','scan_index','model','rss_complex','rmse_complex','aicc','fit_n_points','excluded_inductive_points'], {'rss_complex':'.6g','rmse_complex':'.6g','aicc':'.3f'})}
 
 The SOC 100 and SOC 70 differences are descriptive associations, not causal estimates: only one cell per SOC is represented and each cell contributes two repeated scans. Repeat-scan disagreement is therefore an empirical reproducibility warning, not an independent biological/material replicate. `R0` is the high-frequency ohmic intercept of the lumped cell; `R1/R2` and their CPE exponents describe two distributed relaxations, but a two-terminal spectrum cannot uniquely assign either branch to a specific electrode.
 
@@ -658,6 +673,8 @@ def write_provenance(data_dir: Path, validation: dict, fits: list[FitResult],
     for fit in fits:
         entry = {
             "dataset": fit.spectrum.dataset, "model": fit.spec.model,
+            "scan_index": fit.spectrum.scan_index,
+            "source_file": fit.spectrum.source_file,
             "circuit": fit.spec.circuit, "library": f"impedance.py {impedance.__version__}",
             "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
             "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
