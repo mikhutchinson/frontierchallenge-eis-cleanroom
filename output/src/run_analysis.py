@@ -434,7 +434,11 @@ def rows_from_fits(fits: list[FitResult]) -> tuple[pd.DataFrame, pd.DataFrame, p
                 "parameter": name, "value": value, "std_error": se,
                 "unit": unit, "is_fixed": int(is_fixed),
                 "optimizer_std_error": ose,
-                "uncertainty_method": "fixed" if is_fixed else "finite_difference_covariance",
+                "uncertainty_method": (
+                    "fixed" if is_fixed else
+                    "not_estimable_rank_deficient_zero_sentinel" if se == 0.0 else
+                    "finite_difference_covariance"
+                ),
             })
         m_rows.append({
             "dataset": fit.spectrum.dataset, "model": fit.spec.model,
@@ -597,8 +601,8 @@ Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1`. The repeated sc
 |---|---|---|
 | `randles_rc_w` | `R0-p(R1-Wo1,C1)` | Ideal-capacitor Randles-type baseline plus finite-length diffusion. |
 | `randles_cpe_w` | `R0-p(R1-Wo1,CPE1)` | Tests non-ideal/distributed interfacial capacitance. |
-| `two_rc_w_fixed_r0` | `R0-p(R1,C1)-p(R2,C2)-W1` | Two ideal time constants; data-derived series resistance held fixed. |
-| `two_rc_w_free` | `R0-p(R1,C1)-p(R2,C2)-W1` | Same topology with all parameters free. |
+| `two_rc_w_fixed_r0` | `R0-p(R1,C1)-p(R2,C2)-Wo1` | Two ideal time constants; data-derived series resistance held fixed. |
+| `two_rc_w_free` | `R0-p(R1,C1)-p(R2,C2)-Wo1` | Same topology with all parameters free. |
 | `two_cpe_w` / `two_cpe_w_scan1/2` | `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1` | Prescribed battery model with two distributed time constants and diffusion. |
 
 Fits use unweighted complex nonlinear least squares through impedance.py 1.7.1 `CustomCircuit`. Eight deterministic multistarts are generated from data-derived resistance, peak-frequency, and low-frequency diffusion scales. The best converged solution is selected by fitting-subset RSS. Model comparison uses the task-defined full-spectrum formulas with `N=2n`: `RMSE=sqrt(RSS/N)` and `AICc=N ln(RSS/N)+2k+2k(k+1)/(N-k-1)`.
@@ -631,7 +635,7 @@ These assignments follow the impedance.py element definitions and general EIS/ba
 
 `figures/residuals.png` plots real and imaginary residuals against log frequency for every candidate. `results/fitted_spectrum.csv` makes each residual recomputable. The high-frequency inductive region is the dominant known structural mismatch for non-inductive candidates and is explicitly marked. No point was removed as a statistical outlier after looking at its residual; the only exclusion rule is the representation-based, predeclared `Im(Z)>=0` inductive criterion.
 
-`std_error` values are local covariance approximations and can become large when parameters are correlated or a time constant is weakly identified. Fixed `R0` has `std_error=0` and `is_fixed=1`; this encodes a constant, not zero scientific uncertainty. The `optimizer_std_error` column preserves impedance.py/SciPy's covariance estimate as a cross-check.
+`std_error` values are local covariance approximations and can become large when parameters are correlated or a time constant is weakly identified. Fixed `R0` has `std_error=0` and `is_fixed=1`; this encodes a constant, not zero scientific uncertainty. A non-fixed zero is likewise not interpreted as perfect precision: `uncertainty_method=not_estimable_rank_deficient_zero_sentinel` explicitly marks a locally rank-deficient/zero-sensitivity covariance direction that could not be estimated numerically. The `optimizer_std_error` column preserves impedance.py/SciPy's covariance estimate as a cross-check.
 
 ## 7. Limitations
 
@@ -639,7 +643,7 @@ These assignments follow the impedance.py element definitions and general EIS/ba
 2. The models omit inductance, so the high-frequency loop remains systematically unmatched.
 3. An open finite-space Warburg boundary is assumed; the finite experimental window cannot uniquely establish diffusion geometry or boundary condition.
 4. No replicate cells at the same SOC are available, so SOC and cell identity are confounded.
-5. Parameter covariance is local and does not capture multimodality; multistart fitting reduces but cannot eliminate this risk.
+5. Parameter covariance is local and does not capture multimodality; multistart fitting reduces but cannot eliminate this risk. Boundary solutions or collapsed branches—particularly very large resistance paired with negligible Warburg amplitude—must be treated as non-identifiable effective limits rather than literal material constants.
 6. No Kramers–Kronig linearity/causality/stability claim is made because the task supplies no time-domain stationarity checks and the inductive segment is not represented by the prescribed models.
 
 ## 8. Files and reproducibility
