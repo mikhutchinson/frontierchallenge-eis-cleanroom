@@ -580,11 +580,11 @@ Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-W1`. The repeated sca
 
 | Model identifier | impedance.py circuit string | Purpose |
 |---|---|---|
-| `randles_rc_w` | `R0-p(R1,C1)-W1` | Ideal-capacitor Randles-type baseline plus finite-length diffusion. |
-| `randles_cpe_w` | `R0-p(R1,CPE1)-W1` | Tests non-ideal/distributed interfacial capacitance. |
+| `randles_rc_w` | `R0-p(R1-Wo1,C1)` | Ideal-capacitor Randles-type baseline plus finite-length diffusion. |
+| `randles_cpe_w` | `R0-p(R1-Wo1,CPE1)` | Tests non-ideal/distributed interfacial capacitance. |
 | `two_rc_w_fixed_r0` | `R0-p(R1,C1)-p(R2,C2)-W1` | Two ideal time constants; data-derived series resistance held fixed. |
 | `two_rc_w_free` | `R0-p(R1,C1)-p(R2,C2)-W1` | Same topology with all parameters free. |
-| `two_cpe_w` | `R0-p(R1,CPE1)-p(R2,CPE2)-W1` | Prescribed battery model with two distributed time constants and diffusion. |
+| `two_cpe_w` | `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1` | Prescribed battery model with two distributed time constants and diffusion. |
 
 Fits use unweighted complex nonlinear least squares through impedance.py 1.7.1 `CustomCircuit`. Eight deterministic multistarts are generated from data-derived resistance, peak-frequency, and low-frequency diffusion scales. The best converged solution is selected by fitting-subset RSS. Model comparison uses the task-defined full-spectrum formulas with `N=2n`: `RMSE=sqrt(RSS/N)` and `AICc=N ln(RSS/N)+2k+2k(k+1)/(N-k-1)`.
 
@@ -608,7 +608,7 @@ The SOC 100 and SOC 70 differences are descriptive associations, not causal esti
 - **High-frequency real intercept:** `R0` represents the lumped ohmic contribution (electrolyte, current collectors, contacts, and instrument path). It is not separable into those components from these spectra alone.
 - **High-to-intermediate frequencies:** the first `R||CPE` branch captures the faster depressed arc. A CPE exponent below one is a compact empirical description of distributed time constants/non-ideal capacitance; it is not, by itself, proof of a unique surface morphology.
 - **Intermediate-to-low frequencies:** the second `R||CPE` branch captures a slower interfacial/porous-electrode relaxation. In a complete alkaline cell this may combine charge-transfer, double-layer, porous-electrode, and coupled electrode contributions. Without a reference electrode or perturbation series, anode/cathode attribution is underdetermined.
-- **Lowest frequencies:** the open finite-space Warburg term provides the prescribed `45°`-type diffusion impedance. The measured window does not establish whether diffusion is truly semi-infinite outside the observed range; finite-length alternatives were not among the prescribed candidates.
+- **Lowest frequencies:** the open finite-space Warburg term (`Wo`) represents bounded diffusion, approaching a 45° diffusion response before a more blocking/vertical low-frequency limit. The finite measured window may not sharply identify both diffusion parameters.
 
 These assignments follow the impedance.py element definitions and general EIS/battery literature listed below. They are deliberately phrased as circuit-consistent interpretations rather than unique mechanistic identifications.
 
@@ -622,7 +622,7 @@ These assignments follow the impedance.py element definitions and general EIS/ba
 
 1. Equivalent circuits are non-unique and topology selection is restricted to the contract's candidates.
 2. The models omit inductance, so the high-frequency loop remains systematically unmatched.
-3. Open finite-space Warburg behavior is assumed; the finite experimental window cannot establish asymptotic transport geometry.
+3. An open finite-space Warburg boundary is assumed; the finite experimental window cannot uniquely establish diffusion geometry or boundary condition.
 4. No replicate cells at the same SOC are available, so SOC and cell identity are confounded.
 5. Parameter covariance is local and does not capture multimodality; multistart fitting reduces but cannot eliminate this risk.
 6. No Kramers–Kronig linearity/causality/stability claim is made because the task supplies no time-domain stationarity checks and the inductive segment is not represented by the prescribed models.
