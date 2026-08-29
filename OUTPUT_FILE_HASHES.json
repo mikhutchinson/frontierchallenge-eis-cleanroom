@@ -1,0 +1,57 @@
+[
+  {
+    "path": "analysis_report.md",
+    "bytes": 12658,
+    "sha256": "7b7875155634cc84cedb79af6115702d1dd5096091ed9c826429e4b2a9be31d6"
+  },
+  {
+    "path": "figures/bode_models.png",
+    "bytes": 879080,
+    "sha256": "a02db5f7320322b65dbaedffedd3c7ab498b325a5fd1f23b18491deefe882d36"
+  },
+  {
+    "path": "figures/nyquist_models.png",
+    "bytes": 425883,
+    "sha256": "2559d753ce22e9899a2b6ffc75224e0398343b2086fdfb29ea1d985cebdb6426"
+  },
+  {
+    "path": "figures/residuals.png",
+    "bytes": 854629,
+    "sha256": "afb718ffe97bab8a0340c888c71adae0f277209835663bd4c775a74539af4890"
+  },
+  {
+    "path": "provenance.json",
+    "bytes": 10413,
+    "sha256": "9217154ead043e1c05f60e54875ed15d6c4b76c99c6c2f4538acfd928eaad617"
+  },
+  {
+    "path": "requirements.txt",
+    "bytes": 106,
+    "sha256": "2af40a9cc5633b30f28be822d0465faf122f896c0f35a50fcbc11e06193eb2fb"
+  },
+  {
+    "path": "results/fit_parameters.csv",
+    "bytes": 9589,
+    "sha256": "24f4529569577a411a0f06dd00db57f17d935e5370b9418c8428ca2fcccd1684"
+  },
+  {
+    "path": "results/fitted_spectrum.csv",
+    "bytes": 95752,
+    "sha256": "942f9e9f64efc88c7dfc6a346a79e75844c39170e922c94918322720fd3f78f0"
+  },
+  {
+    "path": "results/model_metrics.csv",
+    "bytes": 2044,
+    "sha256": "8fa5e7763ff58641812cef23c281fbe520ee0d55a6b3b484b74a0768896dce72"
+  },
+  {
+    "path": "run_steps.md",
+    "bytes": 675,
+    "sha256": "24e82f0b70fcca9788d1b909c98a8cfef02123adb9a29769da9a5fd5e694c83c"
+  },
+  {
+    "path": "src/run_analysis.py",
+    "bytes": 43109,
+    "sha256": "f237ecd88854045b940f4978943b9f87a46abca725d483a16141d15ead6aae2d"
+  }
+]

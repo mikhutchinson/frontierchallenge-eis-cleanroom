@@ -1,0 +1,267 @@
+{
+  "task_identifier": "task_116_eis_equivalent_circuit_analysis",
+  "clean_room": {
+    "scorer_blind": true,
+    "materials_used": "public agent-visible instruction/inputs and public scientific sources only",
+    "prohibited_materials_accessed": false
+  },
+  "runtime_environment": {
+    "python": "3.11.15 (main, Jun  2 2026, 22:36:57) [Clang 22.1.3 ]",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "impedance": "1.7.1",
+    "numpy": "1.26.4",
+    "scipy": "1.12.0",
+    "pandas": "2.2.3",
+    "matplotlib": "3.8.4",
+    "task_image_target": "python:3.11-slim with public pinned requirements"
+  },
+  "inputs": [
+    {
+      "local_name": "exampleData.csv",
+      "sha256": "7a6185b5e95e7457dc38a1e6bdc98e6c3a986fe9973592095020bab070fd47d2",
+      "source": "https://github.com/ECSHackWeek/impedance.py/blob/main/data/exampleData.csv",
+      "license": "MIT"
+    },
+    {
+      "local_name": "Cell_1_GEIS_SOC100.csv",
+      "sha256": "15d8f337094ee8a3410ef8ab5f8f741151713696e52015046d8885e17d0cb702",
+      "source": "https://github.com/marzio-barresi/Electrical-Datasets-Alkaline-Batteries/blob/main/GEIS/Cell_1_GEIS.csv",
+      "license": "CC BY 4.0"
+    },
+    {
+      "local_name": "Cell_1_GEIS_SOC100_scan1.csv",
+      "sha256": "cebe28c0e8bb85a50aadafe7eb07bdc7cbf3ed3919f9c9b4b01fcf6ac7026dcb",
+      "source": "https://github.com/marzio-barresi/Electrical-Datasets-Alkaline-Batteries/blob/main/GEIS/Cell_1_GEIS.csv",
+      "license": "CC BY 4.0; lossless columns 1-5 extraction supplied by task author"
+    },
+    {
+      "local_name": "Cell_1_GEIS_SOC100_scan2.csv",
+      "sha256": "2b5e6a245cba8dcbf7476022c16ebc18b7fbf4217cc6af571585549246d70d16",
+      "source": "https://github.com/marzio-barresi/Electrical-Datasets-Alkaline-Batteries/blob/main/GEIS/Cell_1_GEIS.csv",
+      "license": "CC BY 4.0; lossless columns 7-11 extraction supplied by task author"
+    },
+    {
+      "local_name": "Cell_2_GEIS_SOC70.csv",
+      "sha256": "ff550bdaaaca05be457ed16426561adb0f9f408b4f1ca41044e5d73d2cfde5eb",
+      "source": "https://github.com/marzio-barresi/Electrical-Datasets-Alkaline-Batteries/blob/main/GEIS/Cell_2_GEIS.csv",
+      "license": "CC BY 4.0"
+    }
+  ],
+  "input_validation": {
+    "checks": [
+      {
+        "check": "example_shape",
+        "passed": true,
+        "rows": 66
+      },
+      {
+        "check": "soc100_lossless_split",
+        "passed": true
+      },
+      {
+        "check": "soc70_frequency_reset_split",
+        "passed": true,
+        "break_rows_zero_based": [
+          61
+        ],
+        "scan_lengths": [
+          61,
+          61
+        ]
+      },
+      {
+        "check": "finite_positive_frequency",
+        "dataset": "exampleData",
+        "passed": true,
+        "n_points": 66,
+        "frequency_min_hz": 0.0031623,
+        "frequency_max_hz": 10000.0,
+        "inductive_points": 9,
+        "capacitive_points": 57
+      },
+      {
+        "check": "finite_positive_frequency",
+        "dataset": "Cell_1_GEIS_SOC100_scan1",
+        "passed": true,
+        "n_points": 61,
+        "frequency_min_hz": 0.10007046,
+        "frequency_max_hz": 100003.71,
+        "inductive_points": 7,
+        "capacitive_points": 54
+      },
+      {
+        "check": "finite_positive_frequency",
+        "dataset": "Cell_1_GEIS_SOC100_scan2",
+        "passed": true,
+        "n_points": 61,
+        "frequency_min_hz": 0.10007046,
+        "frequency_max_hz": 100003.71,
+        "inductive_points": 6,
+        "capacitive_points": 55
+      },
+      {
+        "check": "finite_positive_frequency",
+        "dataset": "Cell_2_GEIS_SOC70",
+        "passed": true,
+        "n_points": 61,
+        "frequency_min_hz": 0.10007046,
+        "frequency_max_hz": 100003.71,
+        "inductive_points": 11,
+        "capacitive_points": 50
+      },
+      {
+        "check": "finite_positive_frequency",
+        "dataset": "Cell_2_GEIS_SOC70",
+        "passed": true,
+        "n_points": 61,
+        "frequency_min_hz": 0.10007046,
+        "frequency_max_hz": 100003.71,
+        "inductive_points": 11,
+        "capacitive_points": 50
+      }
+    ]
+  },
+  "preprocessing": {
+    "battery_sign": "z_imag_ohm = -1 * delivered '-Im(Ztot) [Ohm]'",
+    "scan_separation": "SOC100 supplied lossless split files; SOC70 split at multi-decade frequency reset row 61",
+    "frequency_order": "preserved in CSV artifacts; sorted only for rendered lines",
+    "fit_mask": "Im(Z) < 0 because prescribed circuits omit inductance; excluded points retained in full residual metrics",
+    "outlier_policy": "no residual-driven deletions"
+  },
+  "models": [
+    {
+      "dataset": "exampleData",
+      "model": "randles_rc_w",
+      "scan_index": 1,
+      "source_file": "exampleData.csv",
+      "circuit": "R0-p(R1-Wo1,C1)",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    },
+    {
+      "dataset": "exampleData",
+      "model": "randles_cpe_w",
+      "scan_index": 1,
+      "source_file": "exampleData.csv",
+      "circuit": "R0-p(R1-Wo1,CPE1)",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    },
+    {
+      "dataset": "exampleData",
+      "model": "two_rc_w_fixed_r0",
+      "scan_index": 1,
+      "source_file": "exampleData.csv",
+      "circuit": "R0-p(R1,C1)-p(R2,C2)-Wo1",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {
+        "R0": 0.01568817257402621
+      }
+    },
+    {
+      "dataset": "exampleData",
+      "model": "two_rc_w_free",
+      "scan_index": 1,
+      "source_file": "exampleData.csv",
+      "circuit": "R0-p(R1,C1)-p(R2,C2)-Wo1",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    },
+    {
+      "dataset": "Cell_1_GEIS_SOC100_scan1",
+      "model": "two_cpe_w",
+      "scan_index": 1,
+      "source_file": "Cell_1_GEIS_SOC100_scan1.csv",
+      "circuit": "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    },
+    {
+      "dataset": "Cell_1_GEIS_SOC100_scan2",
+      "model": "two_cpe_w",
+      "scan_index": 2,
+      "source_file": "Cell_1_GEIS_SOC100_scan2.csv",
+      "circuit": "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    },
+    {
+      "dataset": "Cell_2_GEIS_SOC70",
+      "model": "two_cpe_w_scan1",
+      "scan_index": 1,
+      "source_file": "Cell_2_GEIS_SOC70.csv",
+      "circuit": "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    },
+    {
+      "dataset": "Cell_2_GEIS_SOC70",
+      "model": "two_cpe_w_scan2",
+      "scan_index": 2,
+      "source_file": "Cell_2_GEIS_SOC70.csv",
+      "circuit": "R0-p(R1,CPE1)-p(R2,CPE2)-Wo1",
+      "library": "impedance.py 1.7.1",
+      "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
+      "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
+      "constants": {}
+    }
+  ],
+  "external_sources": [
+    {
+      "id": "impedance_docs_elements",
+      "title": "impedance.py 1.7.1 — Circuit Elements",
+      "url": "https://impedancepy.readthedocs.io/en/latest/circuit-elements.html",
+      "use": "Definitions and units for R, C, CPE, and open finite-space Warburg elements."
+    },
+    {
+      "id": "impedance_docs_fit",
+      "title": "impedance.py 1.7.1 — Fitting impedance spectra",
+      "url": "https://impedancepy.readthedocs.io/en/latest/examples/fitting_example.html",
+      "use": "CustomCircuit syntax, fixed constants, fitting, and inductive-point preprocessing."
+    },
+    {
+      "id": "impedance_py_paper",
+      "title": "Murbach et al., impedance.py: A Python package for electrochemical impedance analysis",
+      "url": "https://doi.org/10.21105/joss.02349",
+      "use": "Software methodology and citation."
+    },
+    {
+      "id": "alkaline_dataset_paper",
+      "title": "Barresi et al., Modeling of alkaline batteries and investigation of the relationship between electrochemical impedance and Raman spectroscopy",
+      "url": "https://doi.org/10.1016/j.est.2026.120719",
+      "use": "Electrochemical system and public alkaline-battery dataset context."
+    },
+    {
+      "id": "eis_tutorial",
+      "title": "Gamry Instruments — Basics of Electrochemical Impedance Spectroscopy",
+      "url": "https://www.gamry.com/application-notes/EIS/basics-of-electrochemical-impedance-spectroscopy/",
+      "use": "Physical interpretation of resistive, capacitive, charge-transfer, and diffusion responses."
+    },
+    {
+      "id": "cpe_source",
+      "title": "Holm et al., Simple circuit equivalents for the constant phase element",
+      "url": "https://doi.org/10.1371/journal.pone.0248786",
+      "use": "CPE as a fractional, non-ideal capacitive element and limits of physical interpretation."
+    },
+    {
+      "id": "battery_eis_perspective",
+      "title": "Wang et al., Probing process kinetics in batteries with electrochemical impedance spectroscopy",
+      "url": "https://doi.org/10.1038/s43246-022-00284-w",
+      "use": "Frequency-dependent battery process interpretation and assignment cautions."
+    }
+  ]
+}

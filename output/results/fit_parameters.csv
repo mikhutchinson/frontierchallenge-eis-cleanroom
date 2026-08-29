@@ -1,0 +1,62 @@
+dataset,model,scan_index,source_file,parameter,value,std_error,unit,is_fixed,optimizer_std_error,uncertainty_method
+exampleData,randles_rc_w,1,exampleData.csv,R0,0.01866192484099513,0.00024013282481539808,Ohm,0,0.0002402077439419131,finite_difference_covariance
+exampleData,randles_rc_w,1,exampleData.csv,R1,0.011816986862523186,0.00030101451846269346,Ohm,0,0.00030431929554267003,finite_difference_covariance
+exampleData,randles_rc_w,1,exampleData.csv,Wo1_0,0.1512039138333351,0.0028953129636313155,Ohm,0,0.46993678777781145,finite_difference_covariance
+exampleData,randles_rc_w,1,exampleData.csv,Wo1_1,1406.2755771602458,1.608292707408802e-07,sec,0,8715.25645930948,finite_difference_covariance
+exampleData,randles_rc_w,1,exampleData.csv,C1,1.2024281100462528,0.08544428567703571,F,0,0.08549470590919027,finite_difference_covariance
+exampleData,randles_cpe_w,1,exampleData.csv,R0,0.016213343035787878,0.00025005697432259615,Ohm,0,0.0002506344739808793,finite_difference_covariance
+exampleData,randles_cpe_w,1,exampleData.csv,R1,0.015691373766402006,0.00037922008722497967,Ohm,0,0.00038474906693203634,finite_difference_covariance
+exampleData,randles_cpe_w,1,exampleData.csv,Wo1_0,0.13156295878829613,0.0014821036047382376,Ohm,0,0.13405579974031565,finite_difference_covariance
+exampleData,randles_cpe_w,1,exampleData.csv,Wo1_1,1164.0379865319885,6.307036760226848e-06,sec,0,2354.8802113324246,finite_difference_covariance
+exampleData,randles_cpe_w,1,exampleData.csv,CPE1_0,3.6943654747607733,0.31203806019681124,Ohm^-1 sec^a,0,0.3155927324642406,finite_difference_covariance
+exampleData,randles_cpe_w,1,exampleData.csv,CPE1_1,0.6254703409781099,0.02119814497927884,-,0,0.021381101736689664,finite_difference_covariance
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,R0,0.01568817257402621,0.0,Ohm,1,0.0,fixed
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,R1,0.009216778075762924,0.00016685488634332341,Ohm,0,0.00016778484777130618,finite_difference_covariance
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,C1,3.038761967932544,0.14744646740945946,F,0,0.14749768530324417,finite_difference_covariance
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,R2,0.005812327228944905,0.00015357405438022828,Ohm,0,0.0001536715120397299,finite_difference_covariance
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,C2,0.16075189568897924,0.008030161352110448,F,0,0.008030169762482471,finite_difference_covariance
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,Wo1_0,0.1439291050240227,0.0011490962931324233,Ohm,0,0.15123035439747226,finite_difference_covariance
+exampleData,two_rc_w_fixed_r0,1,exampleData.csv,Wo1_1,1309.108517810406,2.2185280022222162e-07,sec,0,2738.827892518884,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,R0,0.016519978432492845,0.00013237521662691249,Ohm,0,0.00013237961213966701,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,R1,0.008862504206751306,0.00016288800409447918,Ohm,0,0.0001635518680578075,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,C1,3.3623633578510654,0.162204223010671,F,0,0.16227597835007432,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,R2,0.005370445963647182,0.00017784131834391417,Ohm,0,0.00017790661556691312,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,C2,0.2350252379039526,0.016390682625728268,F,0,0.016390847906905485,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,Wo1_0,0.14313962759186233,0.0010137136280624112,Ohm,0,0.13042111696773678,finite_difference_covariance
+exampleData,two_rc_w_free,1,exampleData.csv,Wo1_1,1299.0587878965591,3.4021964306828874e-07,sec,0,2356.3668319406415,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,R0,0.04318689938533042,0.10535726227110884,Ohm,0,0.10582713296980457,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,R1,9.340530526751436,0.24444698412033186,Ohm,0,0.7145965681105885,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,CPE1_0,0.0013830390073556627,0.00017351859279624948,Ohm^-1 sec^a,0,0.00021409877961027865,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,CPE1_1,0.9999999999999999,0.028674121796910715,-,0,0.04094032943004635,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,R2,321038901.89016575,0.0,Ohm,0,8.240372144621897e-15,not_estimable_rank_deficient_zero_sentinel
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,CPE2_0,0.6288701523036871,0.08275474212816367,Ohm^-1 sec^a,0,0.8346915379178083,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,CPE2_1,0.9999999999999999,0.11706640483390178,-,0,0.5678795778019882,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,Wo1_0,3.9320712834859652e-19,0.0017138463391983133,Ohm,0,80.39325058089946,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan1,two_cpe_w,1,Cell_1_GEIS_SOC100_scan1.csv,Wo1_1,738.0755991721782,0.0,sec,0,0.0,not_estimable_rank_deficient_zero_sentinel
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,R0,0.13065871466686416,0.03679132200904093,Ohm,0,0.03679129551285387,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,R1,0.8513921985590517,1.7083118081400235,Ohm,0,1.708315280363646,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,CPE1_0,0.043182542709453445,0.06298600265450684,Ohm^-1 sec^a,0,0.0629862502981661,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,CPE1_1,0.9999999999999999,0.5785290573705729,-,0,0.5785295122391783,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,R2,5.300949260405997,1.431753474996055,Ohm,0,1.4317570193610323,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,CPE2_0,0.0014106374983428004,0.00020799564125787166,Ohm^-1 sec^a,0,0.00020799427522515,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,CPE2_1,0.998638449108951,0.04114746340000089,-,0,0.041147251251814204,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,Wo1_0,2.2317014922205374,1.1147422743161082,Ohm,0,1.11474225737042,finite_difference_covariance
+Cell_1_GEIS_SOC100_scan2,two_cpe_w,2,Cell_1_GEIS_SOC100_scan2.csv,Wo1_1,1.780310369127551,0.9147477750107718,sec,0,0.9147477718133687,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,R0,0.11771831038664755,0.004948722024087415,Ohm,0,0.004948721594903527,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,R1,0.07253006462143663,0.02124499700820271,Ohm,0,0.021244997804771973,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,CPE1_0,0.403437819865894,0.32264673126605264,Ohm^-1 sec^a,0,0.3226467561072294,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,CPE1_1,0.5216871644434136,0.11612841109972609,-,0,0.11612841682972513,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,R2,0.32222438572672985,0.022649522210264807,Ohm,0,0.022649523715603304,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,CPE2_0,0.41090340204909176,0.016708891243144994,Ohm^-1 sec^a,0,0.01670889298521003,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,CPE2_1,0.86377687972945,0.02773392948472398,-,0,0.027733929981390147,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,Wo1_0,0.44904497231183965,0.03307550535357463,Ohm,0,0.033075507782435884,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan1,1,Cell_2_GEIS_SOC70.csv,Wo1_1,5.577850875294585,0.5490229023036945,sec,0,0.5490229526617801,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,R0,0.11894399506013106,0.0034496538817904783,Ohm,0,0.0034496538312144367,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,R1,0.06697004503212271,0.013528318470348903,Ohm,0,0.013528320131747183,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,CPE1_0,0.32371275215919376,0.19507984627374808,Ohm^-1 sec^a,0,0.19507987398833704,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,CPE1_1,0.5531770575102265,0.08744023430421298,-,0,0.08744024475308367,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,R2,0.32008780294212064,0.01491326794121751,Ohm,0,0.01491326973361339,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,CPE2_0,0.4014906275222439,0.011788832445220485,Ohm^-1 sec^a,0,0.01178883371968246,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,CPE2_1,0.8571223042072713,0.01965691512526369,-,0,0.019656916554910944,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,Wo1_0,0.4772001015931015,0.024647656397037497,Ohm,0,0.02464765866643155,finite_difference_covariance
+Cell_2_GEIS_SOC70,two_cpe_w_scan2,2,Cell_2_GEIS_SOC70.csv,Wo1_1,6.234375999526895,0.4733709479536626,sec,0,0.47337098862844973,finite_difference_covariance
