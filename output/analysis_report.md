@@ -4,9 +4,9 @@
 
 Five independent spectra were analyzed: the impedance.py generic example, two losslessly separated SOC 100 alkaline-cell scans, and two SOC 70 sweeps detected at the frequency reset in the 122-row source file and retained under the public file-stem dataset identifier with explicit scan indices. The battery sign convention was reconstructed exactly as specified: `Im(Z) = -[-Im(Ztot)]`. High-frequency points with positive `Im(Z)` are inductive and were retained in all artifacts/plots but excluded from parameter estimation because the prescribed candidate families contain no inductance. Required full-spectrum residual metrics still include those points.
 
-For `exampleData`, all four prescribed candidates converged. AICc selects **two_rc_w_fixed_r0** (AICc -1708.133, RMSE 0.00147633 Ohm); model preference is based on the complete complex residual and the declared free-parameter count, not visual appearance. The fixed two-time-constant model fixes only `R0`, at a value independently derived by interpolating the high-frequency real-axis crossing; no fitted or reference-answer parameter is hard-coded.
+For `exampleData`, all four prescribed candidates converged. Contract AICc selects **two_rc_w_fixed_r0** (AICc -1708.133, RMSE 0.00147633 Ohm); model preference is based on the complete complex residual and the declared free-parameter count, not visual appearance. The fixed two-time-constant model fixes only `R0`, at a value derived by interpolating the same spectrum's high-frequency real-axis crossing. Because that value is data-derived rather than independently known, an effective-degree-of-freedom sensitivity analysis is reported alongside the contract AICc.
 
-Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1`. The repeated scans are reported separately, preventing artificial joining of independent sweeps. Parameter uncertainty is the local one-standard-deviation covariance estimate from a finite-difference complex Jacobian over the points actually used in fitting.
+Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-Wo1`. The repeated scans are reported separately, preventing artificial joining of independent sweeps. Parameter uncertainty is estimated by singular-value decomposition of a parameter-scaled finite-difference complex Jacobian over the fitted points; rank-deficient models are explicitly marked non-estimable rather than assigned misleading finite errors.
 
 ## 1. Input validation and preprocessing
 
@@ -41,14 +41,14 @@ Fits use unweighted complex nonlinear least squares through impedance.py 1.7.1 `
 
 ## 3. Model comparison for exampleData
 
-| model | n_parameters | rss_complex | rmse_complex | aicc | delta_aicc_within_dataset | converged |
-|---|---|---|---|---|---|---|
-| two_rc_w_fixed_r0 | 6 | 0.000287699 | 0.00147633 | -1708.133 | 0.000 | 1 |
-| two_rc_w_free | 7 | 0.000290281 | 0.00148294 | -1704.722 | 3.411 | 1 |
-| randles_cpe_w | 6 | 0.00031843 | 0.00155317 | -1694.736 | 13.396 | 1 |
-| randles_rc_w | 5 | 0.000470176 | 0.00188731 | -1645.491 | 62.642 | 1 |
+| model | n_parameters | rss_complex | rmse_complex | aicc | delta_aicc_within_dataset | n_parameters_effective_sensitivity | aicc_effective_sensitivity | delta_aicc_effective_sensitivity | converged |
+|---|---|---|---|---|---|---|---|---|---|
+| two_rc_w_fixed_r0 | 6 | 0.000287699 | 0.00147633 | -1708.133 | 0.000 | 7 | -1705.901 | 0.000 | 1 |
+| two_rc_w_free | 7 | 0.000290281 | 0.00148294 | -1704.722 | 3.411 | 7 | -1704.722 | 1.179 | 1 |
+| randles_cpe_w | 6 | 0.00031843 | 0.00155317 | -1694.736 | 13.396 | 6 | -1694.736 | 11.165 | 1 |
+| randles_rc_w | 5 | 0.000470176 | 0.00188731 | -1645.491 | 62.642 | 5 | -1645.491 | 60.410 | 1 |
 
-AICc penalizes extra free parameters. A lower AICc is evidence for better expected information loss only within this declared candidate set; it does not prove that the selected circuit is a unique microscopic mechanism. Compare the parameter covariance and structured residuals before assigning physics.
+The required `aicc` column follows the public contract and counts only free optimizer parameters. For `two_rc_w_fixed_r0`, however, `R0` was estimated from the same spectrum before fitting. The sensitivity columns therefore count one additional effective degree of freedom for that candidate. Its AICc changes from -1708.133 to -1705.901; the resulting advantage over the free-`R0` model narrows to 1.179 AICc units. The fixed model remains slightly preferred, but the original contract ΔAICc is statistically optimistic. A lower AICc is evidence only within this declared candidate set and does not establish a unique microscopic mechanism.
 
 ## 4. Battery scan comparison
 
@@ -82,27 +82,40 @@ These assignments follow the impedance.py element definitions and general EIS/ba
 
 `figures/residuals.png` plots real and imaginary residuals against log frequency for every candidate. `results/fitted_spectrum.csv` makes each residual recomputable. The high-frequency inductive region is the dominant known structural mismatch for non-inductive candidates and is explicitly marked. No point was removed as a statistical outlier after looking at its residual; the only exclusion rule is the representation-based, predeclared `Im(Z)>=0` inductive criterion.
 
-`std_error` values are local covariance approximations and can become large when parameters are correlated or a time constant is weakly identified. Fixed `R0` has `std_error=0` and `is_fixed=1`; this encodes a constant, not zero scientific uncertainty. A non-fixed zero is likewise not interpreted as perfect precision: `uncertainty_method=not_estimable_rank_deficient_zero_sentinel` explicitly marks a locally rank-deficient/zero-sensitivity covariance direction that could not be estimated numerically. The `optimizer_std_error` column preserves impedance.py/SciPy's covariance estimate as a cross-check.
+`std_error` is calculated without forming `J.T @ J`: the finite-difference Jacobian is expressed in relative parameter coordinates and decomposed directly by SVD, avoiding the squared conditioning defect of normal equations. Full-rank estimates agree with the independent impedance.py/SciPy optimizer covariance to numerical precision. Fixed `R0` has `std_error=0` and `is_fixed=1`; this encodes a constant, not zero scientific uncertainty. If the scaled Jacobian is rank deficient, every free-parameter error for that model receives the required numeric zero sentinel and `uncertainty_method=not_estimable_rank_deficient_model_zero_sentinel`; no finite marginal error is claimed. Rank and condition diagnostics are included in `fit_parameters.csv`.
 
-## 7. Limitations
+## 7. Lin-KK compatibility diagnostic
+
+| dataset | scan_index | lin_kk_M | lin_kk_mu | lin_kk_rmse_complex_ohm | lin_kk_normalized_rmse | lin_kk_max_abs_normalized_residual |
+|---|---|---|---|---|---|---|
+| exampleData | 1 | 14 | 0.818656 | 0.000895476 | 0.03021 | 0.100499 |
+| Cell_1_GEIS_SOC100_scan1 | 1 | 7 | 0.778783 | 0.838975 | 0.148805 | 0.327539 |
+| Cell_1_GEIS_SOC100_scan2 | 2 | 12 | 0.757089 | 0.323749 | 0.0783219 | 0.179057 |
+| Cell_2_GEIS_SOC70 | 1 | 14 | 0.83895 | 0.0115535 | 0.036858 | 0.0820227 |
+| Cell_2_GEIS_SOC70 | 2 | 15 | 0.810566 | 0.00972035 | 0.0310737 | 0.0708471 |
+
+The impedance.py Lin-KK routine was run on each complete spectrum with complex fitting, `c=0.85`, and `max_M=50`. The diagnostic asks whether an RC basis with logarithmically distributed time constants can reproduce the observations while controlling negative resistance mass through `mu`. Lower normalized residuals indicate greater compatibility with that basis. These values are not treated as a binary proof of linearity, causality, stability, or stationarity: the routine's RC-only basis has no series inductance, while every spectrum contains a retained high-frequency inductive region. The SOC100 scans show the largest normalized Lin-KK residuals, consistent with their poorer circuit-fit behavior.
+
+## 8. Limitations
 
 1. Equivalent circuits are non-unique and topology selection is restricted to the contract's candidates.
 2. The models omit inductance, so the high-frequency loop remains systematically unmatched.
 3. An open finite-space Warburg boundary is assumed; the finite experimental window cannot uniquely establish diffusion geometry or boundary condition.
 4. No replicate cells at the same SOC are available, so SOC and cell identity are confounded.
 5. Parameter covariance is local and does not capture multimodality; multistart fitting reduces but cannot eliminate this risk. Boundary solutions or collapsed branches—particularly very large resistance paired with negligible Warburg amplitude—must be treated as non-identifiable effective limits rather than literal material constants.
-6. No Kramers–Kronig linearity/causality/stability claim is made because the task supplies no time-domain stationarity checks and the inductive segment is not represented by the prescribed models.
+6. Lin-KK is reported as an RC-basis compatibility diagnostic, not a stand-alone validity verdict; the basis omits the measured inductive segment and the task supplies no time-domain stationarity checks.
+7. The fixed-`R0` candidate uses a same-spectrum preprocessing estimate. Its contract AICc is therefore optimistic, and the effective-degree-of-freedom sensitivity comparison is the more conservative interpretation.
 
-## 8. Files and reproducibility
+## 9. Files and reproducibility
 
 - `results/fit_parameters.csv`: one row per fixed/free parameter with units and uncertainty.
-- `results/model_metrics.csv`: convergence, complex RSS/RMSE, AICc, fit-point counts, and candidate identity.
+- `results/model_metrics.csv`: convergence, complex RSS/RMSE, contract and sensitivity AICc, fit-point counts, candidate identity, and Lin-KK diagnostics.
 - `results/fitted_spectrum.csv`: observed/fitted complex values and residuals for every original point and candidate.
 - `figures/nyquist_models.png`, `bode_models.png`, `residuals.png`: visual evidence.
 - `provenance.json`: hashes, sources, licenses, model strings, runtime, and preprocessing.
 - `run_steps.md`: one-command rebuild instructions.
 
-## 9. Source list
+## 10. Source list
 
 - **impedance.py 1.7.1 — Circuit Elements** — Definitions and units for R, C, CPE, and open finite-space Warburg elements.
   - URL: https://impedancepy.readthedocs.io/en/latest/circuit-elements.html
@@ -116,9 +129,11 @@ These assignments follow the impedance.py element definitions and general EIS/ba
   - URL: https://www.gamry.com/application-notes/EIS/basics-of-electrochemical-impedance-spectroscopy/
 - **Holm et al., Simple circuit equivalents for the constant phase element** — CPE as a fractional, non-ideal capacitive element and limits of physical interpretation.
   - URL: https://doi.org/10.1371/journal.pone.0248786
-- **Wang et al., Probing process kinetics in batteries with electrochemical impedance spectroscopy** — Frequency-dependent battery process interpretation and assignment cautions.
+- **Qu, Ji, and Qu, Probing process kinetics in batteries with electrochemical impedance spectroscopy** — Frequency-dependent battery process interpretation and assignment cautions.
   - URL: https://doi.org/10.1038/s43246-022-00284-w
+- **Schönleber et al., A Method for Improving the Robustness of Linear Kramers–Kronig Validity Tests** — Lin-KK diagnostic method and the mu criterion used by impedance.py.
+  - URL: https://doi.org/10.1016/j.electacta.2014.01.034
 
-## 10. Traceability statement
+## 11. Traceability statement
 
 All numerical conclusions in this report are generated from the delivered CSV files by `src/run_analysis.py`. External sources support software definitions and cautious physical interpretation only. No reference answer, grader, rubric, expected parameter, or evaluator-side artifact was accessed or used.

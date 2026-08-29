@@ -121,6 +121,103 @@
       }
     ]
   },
+  "lin_kk_diagnostics": [
+    {
+      "dataset": "exampleData",
+      "scan_index": 1,
+      "source_file": "exampleData.csv",
+      "n_points": 66,
+      "M": 14,
+      "mu": 0.8186562595525391,
+      "rmse_complex_ohm": 0.0008954755966868075,
+      "normalized_rmse": 0.030209970742632365,
+      "max_abs_normalized_residual": 0.10049879487989904,
+      "settings": {
+        "c": 0.85,
+        "max_M": 50,
+        "fit_type": "complex",
+        "add_cap": false
+      },
+      "scope": "full spectrum, including inductive observations",
+      "interpretation_limit": "RC-only Lin-KK basis lacks series inductance; values are compatibility diagnostics and are not a stand-alone pass/fail claim"
+    },
+    {
+      "dataset": "Cell_1_GEIS_SOC100_scan1",
+      "scan_index": 1,
+      "source_file": "Cell_1_GEIS_SOC100_scan1.csv",
+      "n_points": 61,
+      "M": 7,
+      "mu": 0.778782731789261,
+      "rmse_complex_ohm": 0.8389754009797334,
+      "normalized_rmse": 0.148805392316339,
+      "max_abs_normalized_residual": 0.32753873980333814,
+      "settings": {
+        "c": 0.85,
+        "max_M": 50,
+        "fit_type": "complex",
+        "add_cap": false
+      },
+      "scope": "full spectrum, including inductive observations",
+      "interpretation_limit": "RC-only Lin-KK basis lacks series inductance; values are compatibility diagnostics and are not a stand-alone pass/fail claim"
+    },
+    {
+      "dataset": "Cell_1_GEIS_SOC100_scan2",
+      "scan_index": 2,
+      "source_file": "Cell_1_GEIS_SOC100_scan2.csv",
+      "n_points": 61,
+      "M": 12,
+      "mu": 0.7570892000227704,
+      "rmse_complex_ohm": 0.32374853616964105,
+      "normalized_rmse": 0.07832190699829904,
+      "max_abs_normalized_residual": 0.17905722773511099,
+      "settings": {
+        "c": 0.85,
+        "max_M": 50,
+        "fit_type": "complex",
+        "add_cap": false
+      },
+      "scope": "full spectrum, including inductive observations",
+      "interpretation_limit": "RC-only Lin-KK basis lacks series inductance; values are compatibility diagnostics and are not a stand-alone pass/fail claim"
+    },
+    {
+      "dataset": "Cell_2_GEIS_SOC70",
+      "scan_index": 1,
+      "source_file": "Cell_2_GEIS_SOC70.csv",
+      "n_points": 61,
+      "M": 14,
+      "mu": 0.8389501665076713,
+      "rmse_complex_ohm": 0.011553520643001311,
+      "normalized_rmse": 0.03685802162489795,
+      "max_abs_normalized_residual": 0.08202272715752343,
+      "settings": {
+        "c": 0.85,
+        "max_M": 50,
+        "fit_type": "complex",
+        "add_cap": false
+      },
+      "scope": "full spectrum, including inductive observations",
+      "interpretation_limit": "RC-only Lin-KK basis lacks series inductance; values are compatibility diagnostics and are not a stand-alone pass/fail claim"
+    },
+    {
+      "dataset": "Cell_2_GEIS_SOC70",
+      "scan_index": 2,
+      "source_file": "Cell_2_GEIS_SOC70.csv",
+      "n_points": 61,
+      "M": 15,
+      "mu": 0.8105657558800239,
+      "rmse_complex_ohm": 0.009720345767004528,
+      "normalized_rmse": 0.031073706354286777,
+      "max_abs_normalized_residual": 0.07084706327407918,
+      "settings": {
+        "c": 0.85,
+        "max_M": 50,
+        "fit_type": "complex",
+        "add_cap": false
+      },
+      "scope": "full spectrum, including inductive observations",
+      "interpretation_limit": "RC-only Lin-KK basis lacks series inductance; values are compatibility diagnostics and are not a stand-alone pass/fail claim"
+    }
+  ],
   "preprocessing": {
     "battery_sign": "z_imag_ohm = -1 * delivered '-Im(Ztot) [Ohm]'",
     "scan_separation": "SOC100 supplied lossless split files; SOC70 split at multi-decade frequency reset row 61",
@@ -259,9 +356,15 @@
     },
     {
       "id": "battery_eis_perspective",
-      "title": "Wang et al., Probing process kinetics in batteries with electrochemical impedance spectroscopy",
+      "title": "Qu, Ji, and Qu, Probing process kinetics in batteries with electrochemical impedance spectroscopy",
       "url": "https://doi.org/10.1038/s43246-022-00284-w",
       "use": "Frequency-dependent battery process interpretation and assignment cautions."
+    },
+    {
+      "id": "lin_kk_method",
+      "title": "Schönleber et al., A Method for Improving the Robustness of Linear Kramers–Kronig Validity Tests",
+      "url": "https://doi.org/10.1016/j.electacta.2014.01.034",
+      "use": "Lin-KK diagnostic method and the mu criterion used by impedance.py."
     }
   ]
 }

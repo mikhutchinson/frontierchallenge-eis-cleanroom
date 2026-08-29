@@ -1,8 +1,8 @@
 [
   {
     "path": "analysis_report.md",
-    "bytes": 12658,
-    "sha256": "7b7875155634cc84cedb79af6115702d1dd5096091ed9c826429e4b2a9be31d6"
+    "bytes": 15368,
+    "sha256": "0bc4c1f0ce1530146892cf5009777c93490793c1796ae9103e3b5fe27059f188"
   },
   {
     "path": "figures/bode_models.png",
@@ -21,8 +21,8 @@
   },
   {
     "path": "provenance.json",
-    "bytes": 10413,
-    "sha256": "9217154ead043e1c05f60e54875ed15d6c4b76c99c6c2f4538acfd928eaad617"
+    "bytes": 14210,
+    "sha256": "1601f84f492e2a5799f6d9b772f7f52e906f19061f4cd25bf799a10be65305f4"
   },
   {
     "path": "requirements.txt",
@@ -31,8 +31,8 @@
   },
   {
     "path": "results/fit_parameters.csv",
-    "bytes": 9589,
-    "sha256": "24f4529569577a411a0f06dd00db57f17d935e5370b9418c8428ca2fcccd1684"
+    "bytes": 11152,
+    "sha256": "81ddca4930eafee7340bf64640cda3821861b9aa5686b3348167289cacfd7121"
   },
   {
     "path": "results/fitted_spectrum.csv",
@@ -41,8 +41,8 @@
   },
   {
     "path": "results/model_metrics.csv",
-    "bytes": 2044,
-    "sha256": "8fa5e7763ff58641812cef23c281fbe520ee0d55a6b3b484b74a0768896dce72"
+    "bytes": 3151,
+    "sha256": "a474a9258007a0106417f75f84b0ed2da9f4b2ccbf3d9739f920c889e3693876"
   },
   {
     "path": "run_steps.md",
@@ -51,7 +51,7 @@
   },
   {
     "path": "src/run_analysis.py",
-    "bytes": 43109,
-    "sha256": "f237ecd88854045b940f4978943b9f87a46abca725d483a16141d15ead6aae2d"
+    "bytes": 52371,
+    "sha256": "e8a512b595c2b086d06d8072ad767a2a24da12f6310a874b1e671780ea0726ea"
   }
 ]

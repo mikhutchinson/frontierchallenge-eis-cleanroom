@@ -50,11 +50,39 @@ def main() -> int:
         assert np.isclose(aicc,r.aicc,rtol=1e-9), (r.dataset,r.model,'aicc')
     assert (p.std_error>=0).all()
     fixed=p[p.is_fixed.astype(bool)]; assert len(fixed)>=1 and (fixed.parameter=='R0').any()
+    assert {'optimizer_std_error','uncertainty_method','uncertainty_rank',
+            'uncertainty_n_parameters','uncertainty_condition_number',
+            'uncertainty_condition_is_infinite'} <= set(p)
+    free=p[~p.is_fixed.astype(bool)]
+    full_rank=free.uncertainty_rank==free.uncertainty_n_parameters
+    assert np.allclose(free.loc[full_rank,'std_error'],
+                       free.loc[full_rank,'optimizer_std_error'],rtol=2e-3,atol=1e-10)
+    rank_def=free[~full_rank]
+    assert len(rank_def)>0 and (rank_def.std_error==0).all()
+    assert (rank_def.uncertainty_condition_is_infinite==1).all()
+    assert set(rank_def.uncertainty_method)=={'not_estimable_rank_deficient_model_zero_sentinel'}
+    assert {'n_parameters_effective_sensitivity','aicc_effective_sensitivity',
+            'delta_aicc_effective_sensitivity','lin_kk_M','lin_kk_mu',
+            'lin_kk_rmse_complex_ohm','lin_kk_normalized_rmse',
+            'lin_kk_max_abs_normalized_residual'} <= set(m)
+    for _,r in m.iterrows():
+        b=s[(s.dataset==r.dataset)&(s.model==r.model)]
+        rss=float(np.sum(b.res_real_ohm**2+b.res_imag_ohm**2)); N=2*len(b)
+        ke=int(r.n_parameters_effective_sensitivity)
+        ae=N*math.log(rss/N)+2*ke+2*ke*(ke+1)/(N-ke-1)
+        assert np.isclose(ae,r.aicc_effective_sensitivity,rtol=1e-9)
+    fixed_metric=m[m.model=='two_rc_w_fixed_r0'].iloc[0]
+    assert fixed_metric.n_parameters_effective_sensitivity==fixed_metric.n_parameters+1
     prov=json.loads((out/'provenance.json').read_text())
     assert prov['task_identifier']=='task_116_eis_equivalent_circuit_analysis'
     assert prov['clean_room']['scorer_blind'] is True
     assert prov['clean_room']['prohibited_materials_accessed'] is False
     assert len(prov['inputs'])==5
+    assert len(prov['lin_kk_diagnostics'])==5
+    assert {(x['dataset'],x['scan_index']) for x in prov['lin_kk_diagnostics']} == {
+        ('exampleData',1),('Cell_1_GEIS_SOC100_scan1',1),
+        ('Cell_1_GEIS_SOC100_scan2',2),('Cell_2_GEIS_SOC70',1),
+        ('Cell_2_GEIS_SOC70',2)}
     for x in prov['inputs']:
         assert sha(root/'data'/x['local_name'])==x['sha256']
         assert x['source'].startswith('https://') and x['license'].strip()
@@ -66,8 +94,10 @@ def main() -> int:
             assert im.format=='PNG' and im.width>=1000 and im.height>=700, (f,im.size)
             im.verify()
     report=(out/'analysis_report.md').read_text()
-    for section in ['Input validation','Model comparison','Battery scan comparison','Frequency-range interpretation','Residuals, outliers, and uncertainty','Limitations','Source list','Traceability statement']:
+    for section in ['Input validation','Model comparison','Battery scan comparison','Frequency-range interpretation','Residuals, outliers, and uncertainty','Lin-KK compatibility diagnostic','Limitations','Source list','Traceability statement']:
         assert section.lower() in report.lower(), section
+    assert 'Qu, Ji, and Qu' in report and 'Wang et al.' not in report
+    assert 'statistically optimistic' in report
     manifest=[]
     for fp in sorted(out.rglob('*')):
         if fp.is_file(): manifest.append({'path':str(fp.relative_to(out)),'bytes':fp.stat().st_size,'sha256':sha(fp)})

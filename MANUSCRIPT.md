@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Electrochemical impedance spectroscopy (EIS) can separate processes that overlap in the time domain, but interpretation depends strongly on preprocessing, circuit topology, parameter identifiability, and the treatment of repeated scans. This study presents a reproducible equivalent-circuit analysis of one reference spectrum and four alkaline-battery spectra. The reference dataset was evaluated with four prescribed circuit families: an ideal-capacitor Randles-type model, a constant-phase-element variant, and two two-time-constant models with either fixed or free series resistance. Each battery sweep was fitted with two distributed relaxation branches and an open finite-space Warburg element. Fits used unweighted complex nonlinear least squares, eight deterministic data-derived multistarts, and full-spectrum model comparison by complex residual sum of squares, root-mean-square error, and corrected Akaike information criterion (AICc). Five independent spectra produced eight converged fits, 61 parameter records, and 508 fitted-spectrum records. For the reference spectrum, the two-time-constant model with fixed series resistance was preferred (AICc −1708.133; complex RMSE 0.001476 Ω), followed by its free-resistance counterpart (ΔAICc 3.411). The two SOC 70 sweeps gave closely matched fitted resistances and low residual error, whereas the SOC 100 sweeps disagreed substantially, including one weakly identified boundary solution. The analysis therefore supports descriptive circuit-level comparison but not unique electrode-level or causal attribution. Every reported value is traceable to machine-readable artifacts, independently validated metric recomputation, input hashes, and a clean Python 3.11 rebuild.
+Electrochemical impedance spectroscopy (EIS) can separate processes that overlap in the time domain, but interpretation depends strongly on preprocessing, circuit topology, parameter identifiability, and the treatment of repeated scans. This study presents a reproducible equivalent-circuit analysis of one reference spectrum and four alkaline-battery spectra. The reference dataset was evaluated with four prescribed circuit families: an ideal-capacitor Randles-type model, a constant-phase-element variant, and two two-time-constant models with either fixed or free series resistance. Each battery sweep was fitted with two distributed relaxation branches and an open finite-space Warburg element. Fits used unweighted complex nonlinear least squares, eight deterministic data-derived multistarts, and full-spectrum model comparison by complex residual sum of squares, root-mean-square error, and corrected Akaike information criterion (AICc). Five independent spectra produced eight converged fits, 61 parameter records, and 508 fitted-spectrum records. For the reference spectrum, the two-time-constant model with fixed series resistance was preferred by the contract calculation (AICc −1708.133; complex RMSE 0.001476 Ω). Because the fixed resistance was derived from the same spectrum, counting one additional effective degree of freedom reduced its advantage over the free-resistance model from ΔAICc 3.411 to 1.179. The two SOC 70 sweeps gave closely matched fitted resistances and low residual error, whereas the SOC 100 sweeps disagreed substantially, including one weakly identified boundary solution. The analysis therefore supports descriptive circuit-level comparison but not unique electrode-level or causal attribution. Every reported value is traceable to machine-readable artifacts, independently validated metric recomputation, input hashes, and a clean Python 3.11 rebuild.
 
 ## Introduction
 
@@ -53,7 +53,7 @@ where `CPE1` and `CPE2` represent distributed, non-ideal capacitive relaxations 
 
 Fits used unweighted complex nonlinear least squares. Eight deterministic multistarts were generated from data-derived resistance scales, peak-frequency estimates, and low-frequency diffusion scales. The converged solution with the lowest fitting-subset complex residual sum of squares was retained.
 
-Local parameter uncertainty was estimated from a finite-difference complex Jacobian over the observations used in fitting. Both the locally calculated standard error and the optimizer covariance estimate are reported in [`output/results/fit_parameters.csv`](output/results/fit_parameters.csv). A zero associated with a fixed parameter is explicitly marked `is_fixed=1`. A zero arising from a rank-deficient or zero-sensitivity direction is labeled `not_estimable_rank_deficient_zero_sentinel` and is not interpreted as perfect precision.
+Local parameter uncertainty was estimated from a finite-difference complex Jacobian expressed in relative parameter coordinates. Singular-value decomposition was applied directly to the scaled Jacobian, avoiding formation of the normal matrix and the associated squaring of its condition number. Full-rank estimates were checked against the independent optimizer covariance. When the scaled Jacobian was rank deficient, no finite marginal standard error was claimed: the required numeric field was set to a documented zero sentinel for every free parameter in that model. A zero associated with a fixed parameter remains explicitly marked `is_fixed=1`. Rank, condition number, uncertainty method, and optimizer estimates are reported in [`output/results/fit_parameters.csv`](output/results/fit_parameters.csv).
 
 ### Model-comparison statistics
 
@@ -73,7 +73,7 @@ and
 \mathrm{AICc}=N\ln(\mathrm{RSS}/N)+2k+\frac{2k(k+1)}{N-k-1},
 \]
 
-where \(k\) is the number of free parameters. AICc comparisons were restricted to candidates fitted to the same dataset.
+where \(k\) is the number of free parameters. AICc comparisons were restricted to candidates fitted to the same dataset. The required `aicc` field uses this contract definition. A sensitivity calculation treats the same-spectrum estimate used to fix \(R_0\) as one additional effective degree of freedom.
 
 ### Reproducibility and validation
 
@@ -98,7 +98,7 @@ All four reference-spectrum candidates converged. The fixed-\(R_0\), two-time-co
 | Randles CPE + `Wo` | 6 | 0.000318430 | 0.00155317 | −1694.736 | 13.396 |
 | Randles RC + `Wo` | 5 | 0.000470176 | 0.00188731 | −1645.491 | 62.642 |
 
-The free-\(R_0\) model achieved a slightly lower residual on the fitting subset but did not improve full-spectrum error enough to overcome the additional AICc penalty. The CPE Randles model substantially improved on the ideal-capacitor Randles baseline, but the two-time-constant candidates were better supported within the specified model set.
+The free-\(R_0\) model achieved a slightly lower residual on the fitting subset but did not improve full-spectrum error enough to overcome the contract AICc penalty. The fixed model's contract AICc is optimistic because \(R_0\) was derived from the same data. With one additional effective degree of freedom, its AICc is −1705.901 and its advantage over the free model narrows to 1.179 units. The CPE Randles model substantially improved on the ideal-capacitor Randles baseline, but the two-time-constant candidates remained better supported within the specified model set.
 
 ### Battery spectra
 
@@ -107,6 +107,10 @@ The two SOC 70 sweeps were internally consistent. Their fitted series resistance
 The SOC 100 scans were less consistent. The second scan produced \(R_0=0.130659\ \Omega\), \(R_1+R_2=6.15234\ \Omega\), and a full-spectrum complex RMSE of 0.154583 Ω. The first scan produced a much larger effective second-branch resistance, a negligible Warburg amplitude, and a complex RMSE of 0.483442 Ω. This combination is characteristic of a collapsed or weakly identified parameter direction rather than a credible literal resistance of the cell. The numerical result is retained in the artifact table but qualified accordingly.
 
 Complete fitted values, units, fixed/free status, and uncertainty fields are reported in [`output/results/fit_parameters.csv`](output/results/fit_parameters.csv).
+
+### Lin-KK compatibility diagnostic
+
+The full spectra were also evaluated with the `impedance.py` Lin-KK routine using complex fitting, `c=0.85`, and at most 50 logarithmically distributed RC elements. Normalized complex RMSE values were 0.0302 for the reference spectrum, 0.1488 and 0.0783 for the two SOC 100 scans, and 0.0369 and 0.0311 for the SOC 70 scans. The larger SOC 100 residuals agree with the weaker equivalent-circuit fits. These values are compatibility diagnostics rather than binary validity determinations: the Lin-KK implementation uses an RC-only basis and therefore cannot represent the retained high-frequency inductive response. It also cannot independently establish measurement stationarity.
 
 ### Visual and residual evidence
 
@@ -120,7 +124,7 @@ The principal systematic mismatch occurs in the high-frequency inductive region,
 
 ## Discussion
 
-The reference-spectrum comparison supports two resolvable ideal relaxation times in addition to series resistance and finite-length diffusion. Fixing the series resistance at an independently derived high-frequency crossing yielded the best AICc and a modest advantage over allowing it to vary. This is a statistical preference within the supplied candidate family. It does not establish that the fitted branches correspond uniquely to two discrete electrochemical mechanisms.
+The reference-spectrum comparison supports two resolvable ideal relaxation times in addition to series resistance and finite-length diffusion. Fixing the series resistance at a data-derived high-frequency crossing yielded the best contract AICc and only a small advantage after accounting for the additional effective degree of freedom. This is a statistical preference within the supplied candidate family. It does not establish that the fitted branches correspond uniquely to two discrete electrochemical mechanisms.
 
 The CPE Randles candidate performed better than its ideal-capacitor counterpart, consistent with a depressed arc or distributed relaxation. A CPE exponent below unity can summarize heterogeneity, porosity, nonuniform current distribution, or a distribution of time constants, but the exponent alone cannot distinguish among these causes. The same caution applies to the two CPE branches used for the battery spectra.
 
@@ -130,11 +134,11 @@ The high-frequency inductive loop was handled explicitly rather than absorbed in
 
 The open finite-space Warburg element represents bounded diffusion and approaches a finite-length low-frequency response. Its use is appropriate to the prescribed model family, but the available frequency window does not uniquely determine diffusion geometry or boundary condition. Several parameters, particularly in SOC 100 scan 1, lie in correlated or rank-deficient directions. Multistart optimization reduces sensitivity to initialization but cannot resolve structural non-identifiability.
 
-The analysis has four main limitations. First, equivalent circuits are non-unique. Second, the candidate set omits inductance despite an observed inductive segment. Third, there are no replicate cells at the same SOC, so between-cell and SOC effects cannot be separated. Fourth, local covariance estimates do not characterize multimodal uncertainty. Profile likelihoods, bootstrap resampling, Bayesian posterior exploration, explicit inductive candidates, and replicate-cell experiments would provide a stronger basis for mechanistic inference.
+The analysis has five main limitations. First, equivalent circuits are non-unique. Second, the candidate set omits inductance despite an observed inductive segment; the RC-only Lin-KK basis shares this limitation. Third, there are no replicate cells at the same SOC, so between-cell and SOC effects cannot be separated. Fourth, local covariance estimates do not characterize multimodal uncertainty. Fifth, the fixed-\(R_0\) candidate uses a same-spectrum preprocessing estimate, so its contract AICc advantage is optimistic. Profile likelihoods, bootstrap resampling, Bayesian posterior exploration, explicit inductive candidates, and replicate-cell experiments would provide a stronger basis for mechanistic inference.
 
 ## Conclusion
 
-A complete and reproducible equivalent-circuit analysis was obtained for one reference spectrum and four alkaline-battery sweeps. Eight models converged, and the fixed-series-resistance two-time-constant model was preferred for the reference spectrum by AICc. The SOC 70 sweeps were closely reproducible, whereas the SOC 100 sweeps exposed substantial disagreement and one weakly identified boundary solution. These findings support careful circuit-level description but not unique mechanistic or state-of-charge attribution.
+A complete and reproducible equivalent-circuit analysis was obtained for one reference spectrum and four alkaline-battery sweeps. Eight models converged, and the fixed-series-resistance two-time-constant model was narrowly preferred for the reference spectrum after an effective-degree-of-freedom AICc sensitivity analysis. The SOC 70 sweeps were closely reproducible, whereas the SOC 100 sweeps exposed substantial disagreement and one weakly identified boundary solution. These findings support careful circuit-level description but not unique mechanistic or state-of-charge attribution.
 
 The principal contribution is the combination of numerical analysis with explicit traceability. Every parameter, metric, residual, figure, preprocessing decision, and source assertion is represented in a machine-readable artifact. Independent validation, pinned dependencies, provenance hashes, and an exact clean rebuild make the result inspectable and reproducible without relying on undocumented analytical judgment.
 
@@ -163,5 +167,7 @@ The complete analysis bundle is located under [`output/`](output/):
 3. impedance.py developers. Fitting impedance spectra—impedance.py 1.7.1 documentation. https://impedancepy.readthedocs.io/en/latest/examples/fitting_example.html
 4. Barresi M, et al. Modeling of alkaline batteries and investigation of the relationship between electrochemical impedance and Raman spectroscopy. *Journal of Energy Storage*. 2026;120719. https://doi.org/10.1016/j.est.2026.120719
 5. Holm S, Holm T, Martinsen ØG. Simple circuit equivalents for the constant phase element. *PLOS ONE*. 2021;16(3):e0248786. https://doi.org/10.1371/journal.pone.0248786
-6. Wang Q, et al. Probing process kinetics in batteries with electrochemical impedance spectroscopy. *Communications Engineering*. 2022;1:41. https://doi.org/10.1038/s43246-022-00284-w
-7. Gamry Instruments. Basics of Electrochemical Impedance Spectroscopy. https://www.gamry.com/application-notes/EIS/basics-of-electrochemical-impedance-spectroscopy/
+6. Qu D, Ji H, Qu H. Probing process kinetics in batteries with electrochemical impedance spectroscopy. *Communications Materials*. 2022;3:61. https://doi.org/10.1038/s43246-022-00284-w
+7. Schönleber M, Ivers-Tiffée E. Approximability of impedance spectra by RC elements and implications for impedance analysis. *Electrochemistry Communications*. 2015;58:15–19. https://doi.org/10.1016/j.elecom.2015.05.018
+8. Schönleber M, Klotz D, Ivers-Tiffée E. A method for improving the robustness of linear Kramers–Kronig validity tests. *Electrochimica Acta*. 2014;131:20–27. https://doi.org/10.1016/j.electacta.2014.01.034
+9. Gamry Instruments. Basics of Electrochemical Impedance Spectroscopy. https://www.gamry.com/application-notes/EIS/basics-of-electrochemical-impedance-spectroscopy/
