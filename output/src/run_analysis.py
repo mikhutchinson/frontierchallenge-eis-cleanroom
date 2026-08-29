@@ -345,7 +345,7 @@ def covariance_stderr(spec: ModelSpec, constants: dict[str, float], params: np.n
     return stderr
 
 
-def fit_model(s: Spectrum, spec: ModelSpec, n_starts: int = 18) -> FitResult:
+def fit_model(s: Spectrum, spec: ModelSpec, n_starts: int = 8) -> FitResult:
     used = s.z.imag < 0  # prescribed circuits have no inductance
     f_fit, z_fit_obs = s.frequency[used], s.z[used]
     constants = {"R0": estimate_r0(s)} if spec.fixed_r0 else {}
@@ -363,7 +363,7 @@ def fit_model(s: Spectrum, spec: ModelSpec, n_starts: int = 18) -> FitResult:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
                 c.fit(f_fit, z_fit_obs, weight_by_modulus=False,
-                      maxfev=250000, ftol=1e-12, xtol=1e-12, gtol=1e-12)
+                      maxfev=50000, ftol=1e-9, xtol=1e-9, gtol=1e-9)
             pred_fit = np.asarray(c.predict(f_fit), dtype=complex)
             rss_fit = float(np.sum(np.abs(z_fit_obs - pred_fit) ** 2))
             if not np.isfinite(rss_fit):
@@ -582,7 +582,7 @@ Each battery sweep was fitted to `R0-p(R1,CPE1)-p(R2,CPE2)-W1`. The repeated sca
 | `two_rc_w_free` | `R0-p(R1,C1)-p(R2,C2)-W1` | Same topology with all parameters free. |
 | `two_cpe_w` | `R0-p(R1,CPE1)-p(R2,CPE2)-W1` | Prescribed battery model with two distributed time constants and diffusion. |
 
-Fits use unweighted complex nonlinear least squares through impedance.py 1.7.1 `CustomCircuit`. Eighteen deterministic multistarts are generated from data-derived resistance, peak-frequency, and low-frequency diffusion scales. The best converged solution is selected by fitting-subset RSS. Model comparison uses the task-defined full-spectrum formulas with `N=2n`: `RMSE=sqrt(RSS/N)` and `AICc=N ln(RSS/N)+2k+2k(k+1)/(N-k-1)`.
+Fits use unweighted complex nonlinear least squares through impedance.py 1.7.1 `CustomCircuit`. Eight deterministic multistarts are generated from data-derived resistance, peak-frequency, and low-frequency diffusion scales. The best converged solution is selected by fitting-subset RSS. Model comparison uses the task-defined full-spectrum formulas with `N=2n`: `RMSE=sqrt(RSS/N)` and `AICc=N ln(RSS/N)+2k+2k(k+1)/(N-k-1)`.
 
 ## 3. Model comparison for exampleData
 
@@ -655,7 +655,7 @@ def write_provenance(data_dir: Path, validation: dict, fits: list[FitResult],
         entry = {
             "dataset": fit.spectrum.dataset, "model": fit.spec.model,
             "circuit": fit.spec.circuit, "library": f"impedance.py {impedance.__version__}",
-            "fit_rule": "unweighted complex nonlinear least squares; 18 deterministic multistarts; Im(Z)<0 points",
+            "fit_rule": "unweighted complex nonlinear least squares; 8 deterministic multistarts; Im(Z)<0 points",
             "metric_rule": "full-spectrum RSS; N=2n RMSE and AICc per public task contract",
             "constants": fit.fixed,
         }
